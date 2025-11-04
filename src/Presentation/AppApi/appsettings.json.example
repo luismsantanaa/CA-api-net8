@@ -1,0 +1,93 @@
+{
+  "AllowedHosts": "*",
+  "CacheSettings": {
+    "UseDistributedCache": true,
+    "PreferRedis": false,
+    "RedisURL": "127.0.0.1:16379",
+    "AbsoluteExpirationInMinute": 125,
+    "SlidingExpirationInMinute": 120
+  },
+  "ConnectionStrings": {
+    "ApplicationConnection": "Server=YOUR_SERVER;Database=YOUR_DATABASE;User Id=YOUR_USER;Password=YOUR_PASSWORD;MultipleActiveResultSets=true;TrustServerCertificate=True;",
+    "IdentityConnection": "Server=YOUR_SERVER;Database=YOUR_DATABASE;User Id=YOUR_USER;Password=YOUR_PASSWORD;MultipleActiveResultSets=true;TrustServerCertificate=True;"
+  },
+  "DatabaseOptions": {
+    "CommandTimeout": 30,
+    "MaxRetryCount": 3,
+    "EnableDetailedErrors": true,
+    "RunMigrationsOnStartup": true
+  },
+  "FilesPaths": {
+    "TestPath": "\\\\YOUR_SERVER\\share\\path"
+  },
+  "JwtSettings": {
+    "Key": "YOUR_JWT_SECRET_KEY_HERE_BASE64_ENCODED",
+    "Issuer": "your.app.name",
+    "Audience": "your.domain.com",
+    "DurationInMinutes": 360,
+    "ExpireTime": "02:00:00"
+  },
+  "LocalTimeZoneId": "Atlantic Standard Time",
+  "Serilog": {
+    "Using": [
+      "Serilog.Sinks.File",
+      "Serilog.Sinks.Console"
+    ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console"
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "log/log-.txt",
+          "rollingInterval": "Day",
+          "retainedFileCountLimit": 7,
+          "rollOnFileSizeLimit": false,
+          "formatter": "Serilog.Formatting.Compact.CompactJsonFormatter,Serilog.Formatting.Compact"
+        }
+      }
+    ],
+    "Enrich": [
+      "FromLogContext",
+      "WithThreadId",
+      "WithMachineName"
+    ]
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Information"
+    }
+  },
+  "EMailSettings": {
+    "From": "your.email@yourdomain.com",
+    "Host": "smtp.yourdomain.com",
+    "Port": 587,
+    "UserName": "your.email@yourdomain.com",
+    "Password": "YOUR_EMAIL_PASSWORD",
+    "DisplayName": "No Reply"
+  },
+  "RRHHSettings": {
+    "BaseUrl": "http://your-internal-server:port",
+    "EmplyeeEnpoint": "/api/sistemas/empleados",
+    "EmplyeeEnpointParameter": "userName"
+  },
+  "Cors": {
+    "AllowedOrigins": [
+      "http://localhost:4200",
+      "http://localhost:3000"
+    ]
+  },
+  "AuthorizationSettings": {
+    "UseCustomAuthorization": false
+  },
+  "UseInMemoryDatabase": false
+}
