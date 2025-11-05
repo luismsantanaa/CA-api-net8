@@ -20,8 +20,7 @@ namespace Application.Features.Examples.Categories.Commands
     }
 
     public class CreateCategoryCommandHandler(
-        ICacheKeyService _cacheKeyService,
-        ICacheService _cacheService,
+        ICacheInvalidationService _cacheInvalidationService,
         IMapper _mapper,
         ILogger<CreateCategoryCommandHandler> _logger,
         IUnitOfWork _unitOfWork) : IRequestHandler<CreateCategoryCommand, Result<string>>
@@ -46,13 +45,13 @@ namespace Application.Features.Examples.Categories.Commands
                     await repo.AddAsync(entityToAdd, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                    var cacheKey = _cacheKeyService.GetListKey(typeof(CategoryVm).Name);
-                    await _cacheService.RemoveAsync(cacheKey);
+                    // Invalidate category list cache
+                    await _cacheInvalidationService.InvalidateEntityListCacheAsync<CategoryVm>(cancellationToken);
 
                     _logger.LogInformation("Category created successfully. CategoryId: {CategoryId}, Name: {CategoryName}", 
                         entityToAdd.Id, request.Name);
 
-                    return Result<string>.Success(entityToAdd.Id.ToString(), 1, ErrorMessage.AddedSuccessfully("Category", request.Name!));
+                    return ResultExtensions.CreatedSuccessfully(entityToAdd.Id, "Category", request.Name);
                 }
                 catch (Exception ex)
                 {

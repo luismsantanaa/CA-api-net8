@@ -1,3 +1,4 @@
+﻿using System.Text;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -6,15 +7,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Moq;
-using Security.DbContext;
 using Security.Entities;
 using Security.Entities.DTOs;
+using Security.Repositories.Contracts;
 using Security.Services.Concrete;
 using Security.Services.Contracts;
 using Shared.Exceptions;
 using Shared.Extensions.Contracts;
 using Shared.Services.Contracts;
-using System.Text;
 using Tests.Helpers;
 
 namespace Tests.Security
@@ -40,13 +40,14 @@ namespace Tests.Security
         private readonly Mock<IThrowException> _exceptionMock;
         private readonly Mock<IJsonService> _jsonServiceMock;
         private readonly Mock<SignInManager<IdentityUser>> _signInManagerMock;
+        private readonly Mock<IEmployeeRepository> _employeeRepositoryMock;
 
         public AppAuthServiceTests()
         {
             _identityHelper = new IdentityTestHelper();
-            
+
             _jwtSettings = TestFixture.CreateJwtSettings();
-            
+
             var key = Encoding.ASCII.GetBytes(_jwtSettings.Value.Key);
             _tokenValidationParameters = new TokenValidationParameters
             {
@@ -66,7 +67,8 @@ namespace Tests.Security
             _localTimeServiceMock.Setup(x => x.LocalTime).Returns(DateTime.UtcNow);
             _exceptionMock = new Mock<IThrowException>();
             _jsonServiceMock = new Mock<IJsonService>();
-            
+            _employeeRepositoryMock = new Mock<IEmployeeRepository>();
+
             // Mock SignInManager to avoid HttpContext issues in tests
             _signInManagerMock = new Mock<SignInManager<IdentityUser>>(
                 _identityHelper.UserManager,
@@ -232,16 +234,16 @@ namespace Tests.Security
             // Arrange - Create user and generate initial token
             var testUser = await _identityHelper.CreateTestUserAsync();
             var service = CreateAppAuthService();
-            
+
             var loginRequest = new AuthRequest
             {
                 Email = testUser.Email!,
                 Password = "TestPassword123!"
             };
             _adServiceMock.Setup(x => x.UserExist(It.IsAny<string>())).ReturnsAsync(false);
-            
+
             var loginResult = await service.UserAuthentication(loginRequest);
-            
+
             // Get the JTI from the token
             var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var jwtToken = tokenHandler.ReadJwtToken(loginResult.Token);
@@ -283,7 +285,7 @@ namespace Tests.Security
             // Arrange - Create user and expired refresh token
             var testUser = await _identityHelper.CreateTestUserAsync();
             var service = CreateAppAuthService();
-            
+
             // Generate a token
             var loginRequest = new AuthRequest
             {
@@ -291,7 +293,7 @@ namespace Tests.Security
                 Password = "TestPassword123!"
             };
             _adServiceMock.Setup(x => x.UserExist(It.IsAny<string>())).ReturnsAsync(false);
-            
+
             var loginResult = await service.UserAuthentication(loginRequest);
             var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var jwtToken = tokenHandler.ReadJwtToken(loginResult.Token);
@@ -315,7 +317,7 @@ namespace Tests.Security
 
             // Assert
             result.Success.Should().BeFalse();
-            result.Errors.Should().Contain("El refresh token has expired!");
+            result.Errors.Should().Contain("El refresh token has expirado!");
         }
 
         [Fact]
@@ -324,14 +326,14 @@ namespace Tests.Security
             // Arrange - Create user and used refresh token
             var testUser = await _identityHelper.CreateTestUserAsync();
             var service = CreateAppAuthService();
-            
+
             var loginRequest = new AuthRequest
             {
                 Email = testUser.Email!,
                 Password = "TestPassword123!"
             };
             _adServiceMock.Setup(x => x.UserExist(It.IsAny<string>())).ReturnsAsync(false);
-            
+
             var loginResult = await service.UserAuthentication(loginRequest);
             var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var jwtToken = tokenHandler.ReadJwtToken(loginResult.Token);
@@ -364,14 +366,14 @@ namespace Tests.Security
             // Arrange - Create user and revoked refresh token
             var testUser = await _identityHelper.CreateTestUserAsync();
             var service = CreateAppAuthService();
-            
+
             var loginRequest = new AuthRequest
             {
                 Email = testUser.Email!,
                 Password = "TestPassword123!"
             };
             _adServiceMock.Setup(x => x.UserExist(It.IsAny<string>())).ReturnsAsync(false);
-            
+
             var loginResult = await service.UserAuthentication(loginRequest);
             var tokenHandler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
             var jwtToken = tokenHandler.ReadJwtToken(loginResult.Token);
@@ -404,14 +406,14 @@ namespace Tests.Security
             // Arrange - Create user and token
             var testUser = await _identityHelper.CreateTestUserAsync();
             var service = CreateAppAuthService();
-            
+
             var loginRequest = new AuthRequest
             {
                 Email = testUser.Email!,
                 Password = "TestPassword123!"
             };
             _adServiceMock.Setup(x => x.UserExist(It.IsAny<string>())).ReturnsAsync(false);
-            
+
             var loginResult = await service.UserAuthentication(loginRequest);
 
             var refreshRequest = new TokenRequest
@@ -464,9 +466,9 @@ namespace Tests.Security
             // Setup SignInManager mock to return successful sign-in for tests
             _signInManagerMock
                 .Setup(x => x.PasswordSignInAsync(
-                    It.IsAny<string>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<bool>(), 
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>(),
                     It.IsAny<bool>()))
                 .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
 
@@ -481,17 +483,19 @@ namespace Tests.Security
                 _httpClientMock.Object,
                 _localTimeServiceMock.Object,
                 _exceptionMock.Object,
-                _jsonServiceMock.Object);
+                _jsonServiceMock.Object,
+                _employeeRepositoryMock.Object // <-- Add this argument
+            );
         }
-        
+
         private AppAuthService CreateAppAuthServiceWithFailedSignIn()
         {
             // Setup SignInManager mock to return failed sign-in
             _signInManagerMock
                 .Setup(x => x.PasswordSignInAsync(
-                    It.IsAny<string>(), 
-                    It.IsAny<string>(), 
-                    It.IsAny<bool>(), 
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<bool>(),
                     It.IsAny<bool>()))
                 .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed);
 
@@ -506,7 +510,9 @@ namespace Tests.Security
                 _httpClientMock.Object,
                 _localTimeServiceMock.Object,
                 _exceptionMock.Object,
-                _jsonServiceMock.Object);
+                _jsonServiceMock.Object,
+                _employeeRepositoryMock.Object // <-- Add this argument
+            );
         }
 
         public void Dispose()

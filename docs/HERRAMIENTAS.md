@@ -219,6 +219,54 @@ var products = await repo.GetAllWithSpec(spec);
 
 ---
 
+### Paginación
+
+**Qué es**: Sistema para obtener datos en páginas con filtros, ordenamiento y búsqueda.
+
+**Componentes**:
+- `PaginationBase`: Clase base para queries con paginación
+- `SpecificationParams`: Parámetros de paginación para specifications
+- `PaginationVm<T>`: View Model para respuestas paginadas
+- `ApplyPaging()`: Método helper en `BaseSpecification`
+
+**Para qué se usa**:
+- Obtener datos en páginas
+- Filtrar y ordenar resultados
+- Mejorar rendimiento (no cargar todos los registros)
+
+**Ejemplo**:
+```csharp
+// Query
+public class GetPaginatedProductsQuery : PaginationBase, IRequest<PaginationVm<ProductVm>>
+{
+    public string? CategoryName { get; set; }
+}
+
+// Specification
+public class ProductSpecification : BaseSpecification<Product>
+{
+    public ProductSpecification(ProductSpecificationParams @params) : base(/* filtros */)
+    {
+        ApplySorting(@params.Sort, sortMappings, defaultOrderBy);
+        ApplyPaging(@params); // Aplica paginación automáticamente
+    }
+}
+
+// Handler
+var spec = new ProductSpecification(@params);
+var data = await repo.GetAllWithSpec(spec);
+var total = await repo.CountAsync(new ProductForCountingSpecification(@params));
+```
+
+**Uso en API**:
+```
+GET /api/products/pagination?pageIndex=1&pageSize=10&sort=nameAsc&search=laptop
+```
+
+> 📖 **Guía Completa**: Consulta [docs/PAGINACION.md](PAGINACION.md) para implementación detallada.
+
+---
+
 ## Validación
 
 ### FluentValidation

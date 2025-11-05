@@ -13,6 +13,7 @@ Esta guía te enseñará paso a paso cómo crear un nuevo feature (CRUD completo
 5. [Crear View Models](#5-crear-view-models)
 6. [Crear Controllers](#6-crear-controllers)
 7. [Configurar AutoMapper](#7-configurar-automapper)
+8. [Implementar Paginación](#8-implementar-paginación)
 
 ---
 
@@ -276,6 +277,32 @@ namespace Application.Features.HumanResources.Employees.Queries
 Ver ejemplos completos:
 - `GetAllProductsQuery.cs`
 - `GetProductByIdQuery.cs`
+
+### 3.3 Query con Paginación
+
+Para implementar paginación, sigue estos pasos:
+
+1. **Crear Query que hereda de PaginationBase**:
+```csharp
+public class GetPaginatedProductsQuery : PaginationBase, IRequest<PaginationVm<ProductVm>>
+{
+    // Propiedades adicionales para filtros
+    public string? CategoryName { get; set; }
+}
+```
+
+2. **Crear SpecificationParams y Specification**:
+   - Ver sección [Implementar Paginación](#8-implementar-paginación) para detalles completos
+
+3. **Crear Handler**:
+```csharp
+public class GetPaginatedProductsQueryHandler : IRequestHandler<GetPaginatedProductsQuery, PaginationVm<ProductVm>>
+{
+    // Ver documentación completa en docs/PAGINACION.md
+}
+```
+
+> 📖 **Guía Completa de Paginación**: Consulta [docs/PAGINACION.md](PAGINACION.md) para el paso a paso detallado.
 
 ---
 
@@ -572,6 +599,83 @@ Ver ejemplo: `ExamplesMappingProfile.cs`
 
 ---
 
+## 8. Implementar Paginación
+
+La paginación permite obtener datos en páginas con filtros, ordenamiento y búsqueda.
+
+### Componentes Necesarios
+
+1. **Query**: Hereda de `PaginationBase`
+2. **SpecificationParams**: Hereda de `SpecificationParams`
+3. **Specification**: Con paginación usando `ApplyPaging()`
+4. **SpecificationForCounting**: Sin paginación para contar total
+5. **Handler**: Implementa la lógica de paginación
+
+### Ejemplo Rápido
+
+```csharp
+// 1. Query
+public class GetPaginatedProductsQuery : PaginationBase, IRequest<PaginationVm<ProductVm>>
+{
+    public string? CategoryName { get; set; }
+}
+
+// 2. SpecificationParams
+internal class ProductSpecificationParams : SpecificationParams
+{
+    public string? CategoryName { get; set; }
+}
+
+// 3. Specification (con paginación)
+internal class ProductSpecification : BaseSpecification<TestProduct>
+{
+    public ProductSpecification(ProductSpecificationParams @params) : base(/* filtros */)
+    {
+        ApplySorting(@params.Sort, sortMappings, defaultOrderBy);
+        ApplyPaging(@params); // ✅ Aplica paginación
+    }
+}
+
+// 4. SpecificationForCounting (sin paginación)
+internal class ProductForCountingSpecification : BaseSpecification<TestProduct>
+{
+    public ProductForCountingSpecification(ProductSpecificationParams @params) : base(/* mismos filtros */)
+    {
+        // NO incluir ApplyPaging()
+    }
+}
+
+// 5. Handler
+public class GetPaginatedProductsQueryHandler : IRequestHandler<...>
+{
+    public async Task<PaginationVm<ProductVm>> Handle(...)
+    {
+        var spec = new ProductSpecification(@params);
+        var data = await repo.GetAllWithSpec(spec);
+        
+        var specCount = new ProductForCountingSpecification(@params);
+        var total = await repo.CountAsync(specCount);
+        
+        var pageCount = Math.Ceiling(total / (decimal)@params.PageSize);
+        
+        return new PaginationVm<ProductVm> {
+            Count = total,
+            PageCount = (int)pageCount,
+            PageIndex = @params.PageIndex,
+            PageSize = @params.PageSize,
+            Data = _mapper.Map<IReadOnlyList<ProductVm>>(data)
+        };
+    }
+}
+```
+
+> 📖 **Documentación Completa**: Consulta [docs/PAGINACION.md](PAGINACION.md) para la guía completa paso a paso con ejemplos detallados.
+
+### Referencia
+Ver ejemplo completo: `GetPaginatedCategoriesQuery.cs`
+
+---
+
 ## ✅ Checklist Completo
 
 Al crear un nuevo feature, asegúrate de tener:
@@ -579,6 +683,7 @@ Al crear un nuevo feature, asegúrate de tener:
 - [ ] Entidad en `Domain/Entities/`
 - [ ] Commands (Create, Update, Delete) en `Application/Features/.../Commands/`
 - [ ] Queries (GetAll, GetById) en `Application/Features/.../Queries/`
+- [ ] Query con Paginación (opcional) en `Application/Features/.../Queries/`
 - [ ] Validators en `Application/Features/.../Commands/Validators/`
 - [ ] View Models en `Application/Features/.../VMs/`
 - [ ] Controller en `Presentation/AppApi/Controllers/`
@@ -592,6 +697,48 @@ Al crear un nuevo feature, asegúrate de tener:
 - **Ejemplos Completos**: Revisa `src/Core/Application/Features/Examples/Products/`
 - **Tests**: Revisa `tests/Tests/Application/Handlers/` para ver ejemplos de testing
 - **Arquitectura**: Consulta [docs/ARQUITECTURA.md](ARQUITECTURA.md)
+- **Mejoras Implementadas**: Consulta [docs/MEJORAS_IMPLEMENTADAS.md](MEJORAS_IMPLEMENTADAS.md) para ver helpers y servicios disponibles
+
+## 🚀 Helpers y Servicios Disponibles
+
+El proyecto incluye varios helpers y servicios que simplifican el desarrollo:
+
+### Helpers para Result<T>
+
+```csharp
+// Crear resultado de éxito para entidad creada
+return ResultExtensions.CreatedSuccessfully(entityId, "Product", entityName);
+
+// Crear resultado de éxito para entidad actualizada
+return ResultExtensions.UpdatedSuccessfully(entityId, "Product", entityName);
+
+// Crear resultado de éxito para entidad eliminada
+return ResultExtensions.DeletedSuccessfully(entityId, "Product");
+```
+
+### Servicio de Invalidación de Caché
+
+```csharp
+// Invalidar solo lista
+await _cacheInvalidationService.InvalidateEntityListCacheAsync<CategoryVm>(cancellationToken);
+
+// Invalidar lista + caché relacionado
+await _cacheInvalidationService.InvalidateEntityCacheAsync<ProductVm>(categoryId, cancellationToken);
+```
+
+### Handler Base para Paginación
+
+Para crear handlers de paginación, hereda de `PaginatedQueryHandlerBase`:
+
+```csharp
+internal class GetPaginatedProductsQueryHandler 
+    : PaginatedQueryHandlerBase<TestProduct, ProductVm, ProductSpecificationParams, GetPaginatedProductsQuery>
+{
+    // Solo implementa 3 métodos abstractos
+}
+```
+
+Ver más detalles en [docs/MEJORAS_IMPLEMENTADAS.md](MEJORAS_IMPLEMENTADAS.md).
 
 ---
 

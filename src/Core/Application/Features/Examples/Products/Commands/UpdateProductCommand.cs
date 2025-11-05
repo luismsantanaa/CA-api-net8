@@ -25,8 +25,7 @@ namespace Application.Features.Examples.Products.Commands
     }
 
     public class UpdateProductCommandHandler(
-        ICacheKeyService _cacheKeyService,
-        ICacheService _cacheService,
+        ICacheInvalidationService _cacheInvalidationService,
         IMapper _mapper,
         ILogger<UpdateProductCommandHandler> _logger,
         IUnitOfWork _unitOfWork) : IRequestHandler<UpdateProductCommand, Result<string>>
@@ -58,24 +57,18 @@ namespace Application.Features.Examples.Products.Commands
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                     // Invalidate both generic list cache and category-specific cache
-                    // Note: If CategoryId changed, we should invalidate old category too, but for simplicity we invalidate both generic and new category
-                    var genericCacheKey = _cacheKeyService.GetListKey(typeof(ProductVm).Name);
-                    await _cacheService.RemoveAsync(genericCacheKey);
-                    
-                    var categoryCacheKey = _cacheKeyService.GetKey($"{typeof(ProductVm).Name}:Category", request.CategoryId);
-                    await _cacheService.RemoveAsync(categoryCacheKey);
+                    await _cacheInvalidationService.InvalidateEntityCacheAsync<ProductVm>(request.CategoryId, cancellationToken);
                     
                     // If category changed, also invalidate old category cache
                     if (entityToUpdate.CategoryId != request.CategoryId)
                     {
-                        var oldCategoryCacheKey = _cacheKeyService.GetKey($"{typeof(ProductVm).Name}:Category", entityToUpdate.CategoryId!);
-                        await _cacheService.RemoveAsync(oldCategoryCacheKey);
+                        await _cacheInvalidationService.InvalidateEntityCacheAsync<ProductVm>(entityToUpdate.CategoryId, cancellationToken);
                     }
 
                     _logger.LogInformation("Product updated successfully. ProductId: {ProductId}, Name: {ProductName}", 
                         productId, entityToUpdate.Name);
 
-                    return Result<string>.Success(request.Id!.ToString(), 1, ErrorMessage.UpdatedSuccessfully("Producto", entityToUpdate.Name!));
+                    return ResultExtensions.UpdatedSuccessfully(request.Id!, "Product", entityToUpdate.Name);
                 }
                 catch (Exception ex)
                 {

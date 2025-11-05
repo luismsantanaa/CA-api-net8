@@ -498,11 +498,43 @@ public class DeleteProductCommandHandler : ...
 
 ---
 
+## 🔧 Uso de Helpers y Servicios
+
+### Helpers para Result<T>
+
+```csharp
+// Antes
+return Result<string>.Success(entityId.ToString(), 1, ErrorMessage.AddedSuccessfully("Product", name!));
+
+// Después (más legible)
+return ResultExtensions.CreatedSuccessfully(entityId, "Product", name);
+```
+
+### Servicio de Invalidación de Caché
+
+```csharp
+// Antes
+var genericCacheKey = _cacheKeyService.GetListKey(typeof(ProductVm).Name);
+await _cacheService.RemoveAsync(genericCacheKey);
+var categoryCacheKey = _cacheKeyService.GetKey($"{typeof(ProductVm).Name}:Category", categoryId);
+await _cacheService.RemoveAsync(categoryCacheKey);
+
+// Después (1 línea)
+await _cacheInvalidationService.InvalidateEntityCacheAsync<ProductVm>(categoryId, cancellationToken);
+```
+
+### Handler Base para Paginación
+
+Ver ejemplos completos en `GetPaginatedCategoriesQueryHandler`.
+
+---
+
 ## 📚 Recursos
 
 - Revisa los ejemplos completos en `src/Core/Application/Features/Examples/`
 - Consulta los tests en `tests/Tests/` para ver patrones de uso
 - Ver documentación de cada herramienta en [docs/HERRAMIENTAS.md](HERRAMIENTAS.md)
+- Ver mejoras implementadas en [docs/MEJORAS_IMPLEMENTADAS.md](MEJORAS_IMPLEMENTADAS.md)
 
 ---
 

@@ -56,6 +56,9 @@ namespace Persistence
             }
             #endregion
 
+            // Register Cache Invalidation Service
+            services.AddScoped<Persistence.Caching.Contracts.ICacheInvalidationService, Persistence.Caching.CacheInvalidationService>();
+
             //Custom Repositories
 
         }

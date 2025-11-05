@@ -1,6 +1,9 @@
-﻿namespace Security.Entities
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+namespace Security.Entities
 {
-    internal class VwEmployee
+    [Table("VW_EMPLOYEE_NIC")]
+    public class VwEmployee
     {
         public int Id { get; set; }
         public required string Codigo { get; set; }

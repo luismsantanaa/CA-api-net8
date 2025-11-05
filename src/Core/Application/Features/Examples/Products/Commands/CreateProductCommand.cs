@@ -49,8 +49,7 @@ namespace Application.Features.Examples.Products.Commands
     /// Validates product name uniqueness, creates the product entity, and invalidates cache.
     /// </summary>
     public class CreateProductCommandHandler(
-        ICacheKeyService _cacheKeyService,
-        ICacheService _cacheService,
+        ICacheInvalidationService _cacheInvalidationService,
         IMapper _mapper,
         ILogger<CreateProductCommandHandler> _logger,
         IUnitOfWork _unitOfWork) : IRequestHandler<CreateProductCommand, Result<string>>
@@ -83,16 +82,12 @@ namespace Application.Features.Examples.Products.Commands
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                     // Invalidate both generic list cache and category-specific cache
-                    var genericCacheKey = _cacheKeyService.GetListKey(typeof(ProductVm).Name);
-                    await _cacheService.RemoveAsync(genericCacheKey);
-                    
-                    var categoryCacheKey = _cacheKeyService.GetKey($"{typeof(ProductVm).Name}:Category", request.CategoryId);
-                    await _cacheService.RemoveAsync(categoryCacheKey);
+                    await _cacheInvalidationService.InvalidateEntityCacheAsync<ProductVm>(request.CategoryId, cancellationToken);
 
                     _logger.LogInformation("Product created successfully. ProductId: {ProductId}, Name: {ProductName}", 
                         entityToAdd.Id, request.Name);
 
-                    return Result<string>.Success(entityToAdd.Id.ToString(), 1, ErrorMessage.AddedSuccessfully("Product", request.Name!));
+                    return ResultExtensions.CreatedSuccessfully(entityToAdd.Id, "Product", request.Name);
                 }
                 catch (Exception ex)
                 {

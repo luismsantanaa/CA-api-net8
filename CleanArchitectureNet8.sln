@@ -21,8 +21,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Persistence", "src\Infrastr
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{C4AC070B-A23E-4C95-AEC8-192C31B68E83}"
 	ProjectSection(SolutionItems) = preProject
+		docs\ARQUITECTURA.md = docs\ARQUITECTURA.md
 		docs\Docker-Commands.txt = docs\Docker-Commands.txt
-		docs\Mejoras_Implementacion.md = docs\Mejoras_Implementacion.md
+		docs\EJEMPLOS.md = docs\EJEMPLOS.md
+		docs\ESTRUCTURA_COMPLETA.md = docs\ESTRUCTURA_COMPLETA.md
+		docs\GUIA_DESARROLLO.md = docs\GUIA_DESARROLLO.md
+		docs\HERRAMIENTAS.md = docs\HERRAMIENTAS.md
+		docs\INDICE.md = docs\INDICE.md
+		docs\PAGINACION.md = docs\PAGINACION.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{98460FD8-F847-45C7-A7B5-C9A510DAB6F9}"

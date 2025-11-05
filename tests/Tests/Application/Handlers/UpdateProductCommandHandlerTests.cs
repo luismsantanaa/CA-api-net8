@@ -1,5 +1,4 @@
-using Application.DTOs;
-using Application.Features.Examples.Products.Commands;
+﻿using Application.Features.Examples.Products.Commands;
 using Application.Features.Examples.Products.VMs;
 using AutoMapper;
 using Domain.Entities.Examples;
@@ -19,16 +18,14 @@ namespace Tests.Application.Handlers
     public class UpdateProductCommandHandlerTests
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-        private readonly Mock<ICacheKeyService> _cacheKeyServiceMock;
-        private readonly Mock<ICacheService> _cacheServiceMock;
+        private readonly Mock<ICacheInvalidationService> _cacheInvalidationServiceMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly ILogger<UpdateProductCommandHandler> _logger;
 
         public UpdateProductCommandHandlerTests()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
-            _cacheKeyServiceMock = new Mock<ICacheKeyService>();
-            _cacheServiceMock = new Mock<ICacheService>();
+            _cacheInvalidationServiceMock = new Mock<ICacheInvalidationService>();
             _mapperMock = new Mock<IMapper>();
             _logger = TestFixture.CreateLogger<UpdateProductCommandHandler>();
         }
@@ -38,11 +35,10 @@ namespace Tests.Application.Handlers
         {
             // Arrange
             var handler = new UpdateProductCommandHandler(
-                _cacheKeyServiceMock.Object,
-                _cacheServiceMock.Object,
-                _mapperMock.Object,
-                _logger,
-                _unitOfWorkMock.Object);
+                (ICacheInvalidationService)_unitOfWorkMock.Object,          // IUnitOfWork first
+                _mapperMock.Object,              // IMapper second
+                (ILogger<UpdateProductCommandHandler>)_cacheInvalidationServiceMock.Object, // ICacheInvalidationService third
+                (IUnitOfWork)_logger);                        // ILogger fourth
 
             var productId = Guid.NewGuid();
             var categoryId = Guid.NewGuid();
@@ -73,9 +69,6 @@ namespace Tests.Application.Handlers
             _unitOfWorkMock.Setup(u => u.Repository<TestProduct>()).Returns(repositoryMock.Object);
             _unitOfWorkMock.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
-            _cacheKeyServiceMock.Setup(c => c.GetListKey(typeof(ProductVm).Name)).Returns("ProductVm:List");
-            _cacheKeyServiceMock.Setup(c => c.GetKey(It.IsAny<string>(), It.IsAny<object>())).Returns("ProductVm:Category:xxx");
-
             // Act
             var result = await handler.Handle(request, CancellationToken.None);
 
@@ -83,20 +76,22 @@ namespace Tests.Application.Handlers
             result.Should().NotBeNull();
             result.Succeeded.Should().BeTrue();
             result.Items.Should().Be(productId.ToString());
-            
+
             // Verify mapper was called to update entity (actual property updates happen in mapper)
             // The mapper.Map with UpdateProductCommand and TestProduct will update the entity
             _mapperMock.Verify(m => m.Map(
-                request, 
-                existingProduct, 
-                typeof(UpdateProductCommand), 
+                request,
+                existingProduct,
+                typeof(UpdateProductCommand),
                 typeof(TestProduct)), Times.Once);
-            
+
             repositoryMock.Verify(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>()), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-            
-            // Verify cache invalidation was called (generic list + new category + old category if changed)
-            _cacheServiceMock.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.AtLeast(2));
+
+            // Verify cache invalidation was called (new category cache)
+            _cacheInvalidationServiceMock.Verify(c => c.InvalidateEntityCacheAsync<ProductVm>(request.CategoryId, It.IsAny<CancellationToken>()), Times.Once);
+            // If category changed, old category cache should also be invalidated
+            _cacheInvalidationServiceMock.Verify(c => c.InvalidateEntityCacheAsync<ProductVm>(oldCategoryId, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -104,11 +99,10 @@ namespace Tests.Application.Handlers
         {
             // Arrange
             var handler = new UpdateProductCommandHandler(
-                _cacheKeyServiceMock.Object,
-                _cacheServiceMock.Object,
-                _mapperMock.Object,
-                _logger,
-                _unitOfWorkMock.Object);
+                (ICacheInvalidationService)_unitOfWorkMock.Object,          // IUnitOfWork first
+                _mapperMock.Object,              // IMapper second
+                (ILogger<UpdateProductCommandHandler>)_cacheInvalidationServiceMock.Object, // ICacheInvalidationService third
+                (IUnitOfWork)_logger);                        // ILogger fourth
 
             var productId = Guid.NewGuid();
             var request = new UpdateProductCommand

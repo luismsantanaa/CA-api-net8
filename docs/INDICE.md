@@ -16,6 +16,19 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
   - Crear View Models
   - Crear Controllers
   - Configurar AutoMapper
+  - Implementar Paginación
+  - Helpers y servicios disponibles
+- **[PAGINACION.md](PAGINACION.md)** - Guía completa de paginación
+  - Componentes de paginación
+  - Implementación paso a paso
+  - Ejemplos completos
+  - Mejores prácticas
+- **[MEJORAS_IMPLEMENTADAS.md](MEJORAS_IMPLEMENTADAS.md)** - Helpers y servicios disponibles
+  - Handler Base para Paginación
+  - Servicio de Invalidación de Caché
+  - Helpers para Result<T>
+  - Extensiones para Handlers
+- **[RESUMEN_MEJORAS.md](RESUMEN_MEJORAS.md)** - Resumen ejecutivo de mejoras
 
 ## 🏗️ Arquitectura y Diseño
 
@@ -81,8 +94,16 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
 
 - **Un nuevo feature (CRUD)**: [GUIA_DESARROLLO.md](GUIA_DESARROLLO.md)
 - **Un Command/Query**: [GUIA_DESARROLLO.md#2-crear-commands-cqrs](GUIA_DESARROLLO.md#2-crear-commands-cqrs)
+- **Un Query con Paginación**: [PAGINACION.md](PAGINACION.md)
 - **Un Validator**: [GUIA_DESARROLLO.md#4-crear-validators](GUIA_DESARROLLO.md#4-crear-validators)
 - **Un Controller**: [GUIA_DESARROLLO.md#6-crear-controllers](GUIA_DESARROLLO.md#6-crear-controllers)
+
+### ¿Qué helpers y servicios están disponibles?
+
+- **Helpers para Result<T>**: [MEJORAS_IMPLEMENTADAS.md#4-helpers-para-resultt](MEJORAS_IMPLEMENTADAS.md#4-helpers-para-resultt)
+- **Servicio de Invalidación de Caché**: [MEJORAS_IMPLEMENTADAS.md#3-servicio-de-invalidación-de-caché-automática](MEJORAS_IMPLEMENTADAS.md#3-servicio-de-invalidación-de-caché-automática)
+- **Handler Base para Paginación**: [MEJORAS_IMPLEMENTADAS.md#1-handler-base-para-paginación](MEJORAS_IMPLEMENTADAS.md#1-handler-base-para-paginación)
+- **Extensiones para Handlers**: [MEJORAS_IMPLEMENTADAS.md#5-extensiones-para-handlers-comunes](MEJORAS_IMPLEMENTADAS.md#5-extensiones-para-handlers-comunes)
 
 ### ¿Cómo funciona...?
 

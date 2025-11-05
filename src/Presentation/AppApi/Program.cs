@@ -8,7 +8,6 @@ using Persistence.DbContexts;
 using Persistence.Seeds;
 using Security;
 using Security.DbContext;
-using Security.Entities;
 using Security.Entities.DTOs;
 using Security.Seeds;
 using Serilog;
@@ -48,6 +47,7 @@ builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddPersistenceServices(builder.Configuration);
 builder.Services.AddIdentityServices(builder.Configuration);
 builder.Services.AddSharedServices(builder.Configuration);
+builder.Services.AddSecurityServices(builder.Configuration);
 
 // CORS policy per environment
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();

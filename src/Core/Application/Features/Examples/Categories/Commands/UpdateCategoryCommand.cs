@@ -20,8 +20,7 @@ namespace Application.Features.Examples.Categories.Commands
     }
 
     public class UpdateCategoryCommandHandler(
-        ICacheKeyService _cacheKeyService,
-        ICacheService _cacheService,
+        ICacheInvalidationService _cacheInvalidationService,
         IMapper _mapper,
         ILogger<UpdateCategoryCommandHandler> _logger,
         IUnitOfWork _unitOfWork) : IRequestHandler<UpdateCategoryCommand, Result<string>>
@@ -44,10 +43,10 @@ namespace Application.Features.Examples.Categories.Commands
                 await repo.UpdateAsync(entityToUpdate, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                var cacheKey = _cacheKeyService.GetListKey(typeof(CategoryVm).Name);
-                await _cacheService.RemoveAsync(cacheKey);
+                // Invalidate category list cache
+                await _cacheInvalidationService.InvalidateEntityListCacheAsync<CategoryVm>(cancellationToken);
 
-                return Result<string>.Success(request.Id.ToString(), 1, ErrorMessage.UpdatedSuccessfully("Entity", entityToUpdate.Name!));
+                return ResultExtensions.UpdatedSuccessfully(request.Id, "Category", entityToUpdate.Name);
             }
             catch (Exception ex)
             {

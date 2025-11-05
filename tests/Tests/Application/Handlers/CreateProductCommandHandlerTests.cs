@@ -19,16 +19,14 @@ namespace Tests.Application.Handlers
     public class CreateProductCommandHandlerTests
     {
         private readonly Mock<IUnitOfWork> _unitOfWorkMock;
-        private readonly Mock<ICacheKeyService> _cacheKeyServiceMock;
-        private readonly Mock<ICacheService> _cacheServiceMock;
+        private readonly Mock<ICacheInvalidationService> _cacheInvalidationServiceMock;
         private readonly Mock<IMapper> _mapperMock;
         private readonly ILogger<CreateProductCommandHandler> _logger;
 
         public CreateProductCommandHandlerTests()
         {
             _unitOfWorkMock = new Mock<IUnitOfWork>();
-            _cacheKeyServiceMock = new Mock<ICacheKeyService>();
-            _cacheServiceMock = new Mock<ICacheService>();
+            _cacheInvalidationServiceMock = new Mock<ICacheInvalidationService>();
             _mapperMock = new Mock<IMapper>();
             _logger = TestFixture.CreateLogger<CreateProductCommandHandler>();
         }
@@ -38,8 +36,7 @@ namespace Tests.Application.Handlers
         {
             // Arrange
             var handler = new CreateProductCommandHandler(
-                _cacheKeyServiceMock.Object,
-                _cacheServiceMock.Object,
+                _cacheInvalidationServiceMock.Object,
                 _mapperMock.Object,
                 _logger,
                 _unitOfWorkMock.Object);
@@ -73,9 +70,6 @@ namespace Tests.Application.Handlers
 
             _mapperMock.Setup(m => m.Map<TestProduct>(request)).Returns(productEntity);
 
-            _cacheKeyServiceMock.Setup(c => c.GetListKey(typeof(ProductVm).Name)).Returns("ProductVm:List");
-            _cacheKeyServiceMock.Setup(c => c.GetKey(It.IsAny<string>(), It.IsAny<object>())).Returns("ProductVm:Category:xxx");
-
             // Act
             var result = await handler.Handle(request, CancellationToken.None);
 
@@ -86,7 +80,7 @@ namespace Tests.Application.Handlers
             
             repositoryMock.Verify(r => r.AddAsync(It.IsAny<TestProduct>(), It.IsAny<CancellationToken>()), Times.Once);
             _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-            _cacheServiceMock.Verify(c => c.RemoveAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+            _cacheInvalidationServiceMock.Verify(c => c.InvalidateEntityCacheAsync<ProductVm>(request.CategoryId, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -94,8 +88,7 @@ namespace Tests.Application.Handlers
         {
             // Arrange
             var handler = new CreateProductCommandHandler(
-                _cacheKeyServiceMock.Object,
-                _cacheServiceMock.Object,
+                _cacheInvalidationServiceMock.Object,
                 _mapperMock.Object,
                 _logger,
                 _unitOfWorkMock.Object);

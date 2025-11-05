@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Security.DbContext;
 using Security.Entities;
 using Security.Entities.DTOs;
+using Security.Repositories.Contracts;
 using Security.Services.Contracts;
 using Shared.Exceptions;
 using Shared.Extensions;
@@ -30,6 +31,7 @@ namespace Security.Services.Concrete
         private readonly DateTime _localTime;
         private readonly IThrowException _exception;
         private readonly IJsonService _jsonService;
+        private readonly IEmployeeRepository _employeeRepository;
 
         public AppAuthService(
            UserManager<IdentityUser> userManager,
@@ -42,7 +44,8 @@ namespace Security.Services.Concrete
            IGenericHttpClient httpClient,
            ILocalTimeService localTime,
            IThrowException exception,
-           IJsonService jsonService
+           IJsonService jsonService,
+           IEmployeeRepository employeeRepository
            )
         {
             _userManager = userManager;
@@ -56,6 +59,7 @@ namespace Security.Services.Concrete
             _localTime = localTime.LocalTime;
             _exception = exception;
             _jsonService = jsonService;
+            _employeeRepository = employeeRepository;
         }
 
         public async Task<AuthResponse> UserAuthentication(AuthRequest request)
@@ -103,7 +107,7 @@ namespace Security.Services.Concrete
             if (request.FullName == null && request.Department == null)
             {
 
-                var service = new EmployeeService(request.UserName!, _configuration, _httpClient, _jsonService);
+                var service = new EmployeeService(request.UserName!, _employeeRepository);
 
                 var employee = await service.GetEmployee()!;
 

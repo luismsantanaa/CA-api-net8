@@ -1,4 +1,4 @@
-namespace Application.DTOs
+﻿namespace Application.DTOs
 {
     /// <summary>
     /// Extension methods for Result<T> to provide helper methods for common operations.
@@ -146,6 +146,47 @@ namespace Application.DTOs
         public static Result<T> SuccessResult<T>(T data, int total = 1)
         {
             return Result<T>.Success(data, total);
+        }
+
+        /// <summary>
+        /// Creates a successful result for a created entity operation.
+        /// Commonly used after Create operations.
+        /// </summary>
+        /// <param name="entityId">The ID of the created entity</param>
+        /// <param name="entityName">The name/type of the entity (e.g., "Product", "Category")</param>
+        /// <param name="entityIdentifier">Optional identifier for the entity (e.g., name, code)</param>
+        /// <returns>A successful Result with the entity ID as string</returns>
+        public static Result<string> CreatedSuccessfully(Guid entityId, string entityName, string? entityIdentifier = null)
+        {
+            var message = Shared.Exceptions.ErrorMessage.AddedSuccessfully(entityName, entityIdentifier ?? entityId.ToString());
+            return Result<string>.Success(entityId.ToString(), 1, message);
+        }
+
+        /// <summary>
+        /// Creates a successful result for an updated entity operation.
+        /// Commonly used after Update operations.
+        /// </summary>
+        /// <param name="entityId">The ID of the updated entity</param>
+        /// <param name="entityName">The name/type of the entity</param>
+        /// <param name="entityIdentifier">Optional identifier for the entity</param>
+        /// <returns>A successful Result with the entity ID as string</returns>
+        public static Result<string> UpdatedSuccessfully(string entityId, string entityName, string? entityIdentifier = null)
+        {
+            var message = Shared.Exceptions.ErrorMessage.UpdatedSuccessfully(entityName, entityIdentifier ?? entityId);
+            return Result<string>.Success(entityId, 1, message);
+        }
+
+        /// <summary>
+        /// Creates a successful result for a deleted entity operation.
+        /// Commonly used after Delete operations.
+        /// </summary>
+        /// <param name="entityId">The ID of the deleted entity</param>
+        /// <param name="entityName">The name/type of the entity</param>
+        /// <returns>A successful Result with the entity ID as string</returns>
+        public static Result<string> DeletedSuccessfully(string entityId, string entityName)
+        {
+            var message = Shared.Exceptions.ErrorMessage.DeletedSuccessfully(entityName, entityId);
+            return Result<string>.Success(entityId, 1, message);
         }
     }
 }

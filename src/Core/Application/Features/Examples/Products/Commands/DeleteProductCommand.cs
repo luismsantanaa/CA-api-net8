@@ -19,8 +19,7 @@ namespace Application.Features.Examples.Products.Commands
     }
 
     public class DeleteProductCommandHandler(
-        ICacheKeyService _cacheKeyService,
-        ICacheService _cacheService,
+        ICacheInvalidationService _cacheInvalidationService,
         ILogger<DeleteProductCommandHandler> _logger,
         IUnitOfWork _unitOfWork) : IRequestHandler<DeleteProductCommand, Result<string>>
     {
@@ -48,15 +47,11 @@ namespace Application.Features.Examples.Products.Commands
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                     // Invalidate both generic list cache and category-specific cache
-                    var genericCacheKey = _cacheKeyService.GetListKey(typeof(ProductVm).Name);
-                    await _cacheService.RemoveAsync(genericCacheKey);
-                    
-                    var categoryCacheKey = _cacheKeyService.GetKey($"{typeof(ProductVm).Name}:Category", categoryId);
-                    await _cacheService.RemoveAsync(categoryCacheKey);
+                    await _cacheInvalidationService.InvalidateEntityCacheAsync<ProductVm>(categoryId, cancellationToken);
 
                     _logger.LogInformation("Product deleted successfully. ProductId: {ProductId}", productId);
 
-                    return Result<string>.Success(entityToDelete.Id.ToString(), 1, ErrorMessage.DeletedSuccessfully("Product", entityToDelete.Id.ToString()));
+                    return ResultExtensions.DeletedSuccessfully(entityToDelete.Id.ToString(), "Product");
                 }
                 catch (Exception ex)
                 {

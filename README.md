@@ -28,6 +28,7 @@ Este proyecto incluye una arquitectura limpia con las siguientes característica
 - ✅ **Serilog** - Logging estructurado
 - ✅ **Health Checks** - Monitoreo de salud de la aplicación
 - ✅ **Caching** - Caché local y distribuido (Redis)
+- ✅ **Pagination** - Sistema completo de paginación con filtros y ordenamiento
 - ✅ **Exception Handling** - Manejo centralizado de excepciones
 - ✅ **XML Documentation** - Documentación automática de API
 
@@ -207,10 +208,13 @@ El proyecto incluye un ejemplo completo de un CRUD de Productos. Puedes usarlo c
 ## 📖 Documentación Adicional
 
 - [Guía de Desarrollo Completa](docs/GUIA_DESARROLLO.md) - Cómo crear nuevos features
+- [Guía de Paginación](docs/PAGINACION.md) - Implementación completa de paginación
 - [Arquitectura Detallada](docs/ARQUITECTURA.md) - Explicación de capas y principios
 - [Herramientas y Tecnologías](docs/HERRAMIENTAS.md) - Detalles de cada herramienta
 - [Estructura del Proyecto](docs/ESTRUCTURA_PROYECTO.md) - Organización de carpetas
 - [Ejemplos y Mejores Prácticas](docs/EJEMPLOS.md) - Ejemplos de código y patrones
+- [Mejoras Implementadas](docs/MEJORAS_IMPLEMENTADAS.md) - Helpers y servicios disponibles
+- [Resumen de Mejoras](docs/RESUMEN_MEJORAS.md) - Resumen ejecutivo de mejoras
 
 ## 🔐 Autenticación
 

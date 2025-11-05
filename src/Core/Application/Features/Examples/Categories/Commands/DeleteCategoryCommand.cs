@@ -19,8 +19,7 @@ namespace Application.Features.Examples.Categories.Commands
     }
 
     public class DeleteCategoryCommandHandler(
-        ICacheKeyService _cacheKeyService,
-        ICacheService _cacheService,
+        ICacheInvalidationService _cacheInvalidationService,
         ILogger<DeleteCategoryCommandHandler> _logger,
         IUnitOfWork _unitOfWork) : IRequestHandler<DeleteCategoryCommand, Result<string>>
     {
@@ -41,10 +40,10 @@ namespace Application.Features.Examples.Categories.Commands
                 await repo.UpdateAsync(entityToDelete, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                var cacheKey = _cacheKeyService.GetListKey(typeof(CategoryVm).Name);
-                await _cacheService.RemoveAsync(cacheKey);
+                // Invalidate category list cache
+                await _cacheInvalidationService.InvalidateEntityListCacheAsync<CategoryVm>(cancellationToken);
 
-                return Result<string>.Success(entityToDelete.Id.ToString(), 1, ErrorMessage.DeletedSuccessfully("Category", entityToDelete.Id.ToString()));
+                return ResultExtensions.DeletedSuccessfully(entityToDelete.Id.ToString(), "Category");
             }
             catch (Exception ex)
             {
