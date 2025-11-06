@@ -15,6 +15,7 @@ namespace Shared
             services.AddTransient<IGenericHttpClient, GenericHttpClientService>();
             services.AddTransient<ILocalTimeService, LocalTimeService>();
             services.AddTransient<IJsonService, JsonService>();
+            services.AddTransient<IFileStorageService, LocalFileStorageService>();
         }
     }
 }

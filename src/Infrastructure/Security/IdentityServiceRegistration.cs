@@ -22,7 +22,13 @@ namespace Security
             services.AddIdentity<IdentityUser, IdentityRole>()
                 .AddEntityFrameworkStores<IdentityContext>()
                 .AddDefaultTokenProviders();
-            services.AddTransient<IActiveDirectoryService, ActiveDirectoryService>();
+
+            // ActiveDirectoryService is Windows-specific
+            if (OperatingSystem.IsWindows())
+            {
+                services.AddTransient<IActiveDirectoryService, ActiveDirectoryService>();
+            }
+
             services.AddTransient<IAppAuthService, AppAuthService>();
             services.AddTransient<IMardomAuthService, MardomAuthService>();
 
@@ -48,7 +54,7 @@ namespace Security
             {
                 options.SaveToken = true;
                 options.TokenValidationParameters = tokenValidationParameters;
-                
+
                 // Enable detailed error information for debugging
                 options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
                 {

@@ -14,7 +14,7 @@ namespace Security.Services.Concrete
             _employeeRepository = employeeRepository;
         }
 
-        public async Task<VwEmployee>? GetEmployee()
+        public async Task<VwEmployee?>? GetEmployee()
         {
             return await _employeeRepository.GetEmployeeByUserNameAsync(_userName);
         }

@@ -45,7 +45,7 @@ namespace Tests.Application.Handlers
             };
 
             var repositoryMock = new Mock<IGenericRepository<TestProduct>>();
-            repositoryMock.Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
+            repositoryMock.Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>())!)
                 .ReturnsAsync(existingProduct);
 
             _unitOfWorkMock.Setup(u => u.Repository<TestProduct>())
@@ -81,8 +81,10 @@ namespace Tests.Application.Handlers
             var request = new DeleteProductCommand { Id = productId.ToString() };
 
             var repositoryMock = new Mock<IGenericRepository<TestProduct>>();
-            repositoryMock.Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
+#pragma warning disable CS8620 // Nullability mismatch in test mock setup
+            repositoryMock.Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>())!)
                 .ReturnsAsync((TestProduct?)null);
+#pragma warning restore CS8620
 
             _unitOfWorkMock.Setup(u => u.Repository<TestProduct>())
                 .Returns(repositoryMock.Object);

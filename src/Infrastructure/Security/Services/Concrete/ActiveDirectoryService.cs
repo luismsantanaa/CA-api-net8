@@ -2,6 +2,7 @@
 using System.DirectoryServices;
 using System.DirectoryServices.AccountManagement;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Microsoft.Extensions.Logging;
 using Security.Entities;
 using Security.Services.Contracts;
@@ -9,6 +10,11 @@ using Shared.Exceptions;
 
 namespace Security.Services.Concrete
 {
+    /// <summary>
+    /// Active Directory service for Windows platforms.
+    /// This service uses Windows-specific APIs and is only supported on Windows.
+    /// </summary>
+    [SupportedOSPlatform("windows")]
     public class ActiveDirectoryService : IActiveDirectoryService
     {
         private readonly ILogger<ActiveDirectoryService> _logger;

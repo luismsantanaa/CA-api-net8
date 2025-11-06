@@ -308,8 +308,8 @@ namespace Tests.Security
 
             var refreshRequest = new TokenRequest
             {
-                Token = loginResult.Token,
-                RefreshToken = expiredToken.Token
+                Token = loginResult.Token!,
+                RefreshToken = expiredToken.Token!
             };
 
             // Act
@@ -348,8 +348,8 @@ namespace Tests.Security
 
             var refreshRequest = new TokenRequest
             {
-                Token = loginResult.Token,
-                RefreshToken = usedToken.Token
+                Token = loginResult.Token!,
+                RefreshToken = usedToken.Token!
             };
 
             // Act
@@ -388,8 +388,8 @@ namespace Tests.Security
 
             var refreshRequest = new TokenRequest
             {
-                Token = loginResult.Token,
-                RefreshToken = revokedToken.Token
+                Token = loginResult.Token!,
+                RefreshToken = revokedToken.Token!
             };
 
             // Act

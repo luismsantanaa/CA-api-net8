@@ -49,7 +49,7 @@ namespace Tests.Authorization
             var jwtUtils = new JwtUtils(_jwtSettings, _logger);
 
             // Act
-            var result = jwtUtils.ValidateToken(null);
+            var result = jwtUtils.ValidateToken(null!);
 
             // Assert
             result.Should().BeNull();
@@ -163,7 +163,7 @@ namespace Tests.Authorization
             var jwtUtils = new JwtUtils(_jwtSettings, _logger);
 
             // Act
-            var result = jwtUtils.GetCurrentToken(null);
+            var result = jwtUtils.GetCurrentToken(null!);
 
             // Assert
             result.Should().BeNull();
@@ -173,7 +173,7 @@ namespace Tests.Authorization
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(settings.Key);
-            
+
             var claims = new List<Claim>
             {
                 new Claim("uid", userId),
@@ -207,7 +207,7 @@ namespace Tests.Authorization
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(settings.Key);
-            
+
             var claims = new List<Claim>
             {
                 new Claim("uid", userId)
@@ -231,7 +231,7 @@ namespace Tests.Authorization
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.ASCII.GetBytes(settings.Key);
-            
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Email, TestFixture.CreateTestEmail())

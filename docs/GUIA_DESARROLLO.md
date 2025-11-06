@@ -738,7 +738,7 @@ internal class GetPaginatedProductsQueryHandler
 }
 ```
 
-Ver más detalles en [docs/MEJORAS_IMPLEMENTADAS.md](MEJORAS_IMPLEMENTADAS.md).
+Ver más detalles en [docs/RESUMEN_MEJORAS.md](RESUMEN_MEJORAS.md).
 
 ---
 

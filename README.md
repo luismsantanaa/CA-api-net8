@@ -52,7 +52,7 @@ CleanArchitectureNet8/
 └── tools/                      # Scripts y herramientas
 ```
 
-> 📖 Para más detalles sobre la estructura, consulta [docs/ESTRUCTURA_PROYECTO.md](docs/ESTRUCTURA_PROYECTO.md)
+> 📖 Para más detalles sobre la estructura, consulta [docs/ESTRUCTURA_COMPLETA.md](docs/ESTRUCTURA_COMPLETA.md)
 
 ## 🔧 Requisitos Previos
 
@@ -211,10 +211,9 @@ El proyecto incluye un ejemplo completo de un CRUD de Productos. Puedes usarlo c
 - [Guía de Paginación](docs/PAGINACION.md) - Implementación completa de paginación
 - [Arquitectura Detallada](docs/ARQUITECTURA.md) - Explicación de capas y principios
 - [Herramientas y Tecnologías](docs/HERRAMIENTAS.md) - Detalles de cada herramienta
-- [Estructura del Proyecto](docs/ESTRUCTURA_PROYECTO.md) - Organización de carpetas
+- [Estructura del Proyecto](docs/ESTRUCTURA_COMPLETA.md) - Organización de carpetas
 - [Ejemplos y Mejores Prácticas](docs/EJEMPLOS.md) - Ejemplos de código y patrones
-- [Mejoras Implementadas](docs/MEJORAS_IMPLEMENTADAS.md) - Helpers y servicios disponibles
-- [Resumen de Mejoras](docs/RESUMEN_MEJORAS.md) - Resumen ejecutivo de mejoras
+- [Resumen de Mejoras](docs/RESUMEN_MEJORAS.md) - Resumen ejecutivo de mejoras y helpers disponibles
 
 ## 🔐 Autenticación
 

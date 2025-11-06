@@ -111,7 +111,7 @@ namespace Security.Services.Concrete
 
                 var employee = await service.GetEmployee()!;
 
-                request.Codigo = employee.Codigo!.Trim();
+                request.Codigo = employee!.Codigo!.Trim();
                 request.FullName = employee.Nombre!.Trim();
                 request.Email = employee.Email!.Trim();
                 request.Department = employee.Departamento!.Trim();
@@ -315,7 +315,7 @@ namespace Security.Services.Concrete
                         Success = false,
                         Errors = new List<string>
                         {
-                            "El refresh token has expired!"
+                            "El refresh token has expirado!"
                         }
                     };
                 }

@@ -521,6 +521,337 @@ result.Items.Should().HaveCount(5);
 
 ---
 
+## Manejo de Archivos
+
+### IFileStorageService
+
+**Qué es**: Servicio para gestionar almacenamiento de archivos.
+
+**Para qué se usa**:
+- Guardar archivos en disco
+- Eliminar archivos físicos
+- Crear directorios
+- Abstraer el sistema de archivos
+
+**Métodos principales**:
+```csharp
+public interface IFileStorageService
+{
+    // Guardar archivo
+    Task<string> SaveFileAsync(
+        IFormFile file, 
+        string directory, 
+        string? customFileName = null,
+        CancellationToken cancellationToken = default);
+
+    // Eliminar archivo
+    Task<bool> DeleteFileAsync(
+        string filePath, 
+        CancellationToken cancellationToken = default);
+
+    // Crear directorio
+    Task<bool> EnsureDirectoryExistsAsync(string path);
+}
+```
+
+**Ventajas**:
+- ✅ Abstracción del sistema de archivos
+- ✅ Fácil de testear (mock)
+- ✅ Centraliza lógica de almacenamiento
+- ✅ Facilita cambiar a cloud storage (S3, Azure Blob, etc.)
+
+**Uso**:
+```csharp
+// Guardar archivo
+var path = await _fileStorageService.SaveFileAsync(
+    formFile, 
+    "C:\\uploads", 
+    customFileName: "document.pdf",
+    cancellationToken);
+
+// Eliminar archivo
+var deleted = await _fileStorageService.DeleteFileAsync(path, cancellationToken);
+```
+
+---
+
+### FileValidExtensions
+
+**Qué es**: Enumeración de extensiones de archivo válidas.
+
+**Para qué se usa**:
+- Validar archivos antes de subirlos
+- Prevenir subida de archivos maliciosos
+- Mantener lista centralizada de extensiones permitidas
+
+**Extensiones válidas**:
+```csharp
+.doc, .docx    // Microsoft Word
+.pdf           // PDF
+.xls, .xlsx    // Microsoft Excel
+.ppt, .pptx    // Microsoft PowerPoint
+.txt, .xml     // Texto
+.jpg, .jpeg    // Imágenes JPEG
+.png           // Imágenes PNG
+```
+
+**Uso**:
+```csharp
+var extensions = FileValidExtensions.ValidFiles;
+var fileExtension = Path.GetExtension(fileName);
+
+if (!extensions.Contains(fileExtension))
+{
+    throw new BadRequestException("Invalid file extension");
+}
+```
+
+---
+
+### UploadedFile (Entidad)
+
+**Qué es**: Entidad de dominio para archivos subidos.
+
+**Propiedades**:
+```csharp
+public class UploadedFile : BaseEntity
+{
+    public string Name { get; set; }        // Nombre del archivo
+    public string? Type { get; set; }       // Tipo/categoría (Invoice, Contract, etc.)
+    public string? Reference { get; set; }  // Referencia externa
+    public decimal? Size { get; set; }      // Tamaño en MB
+    public string? Comment { get; set; }    // Comentario opcional
+    public string? Extension { get; set; }  // Extensión (.pdf, .docx, etc.)
+    public string Path { get; set; }        // Ruta física del archivo
+}
+```
+
+**Uso**:
+- Tracking de archivos subidos
+- Metadatos y auditoría
+- Soft delete (Active property from BaseEntity)
+
+---
+
+## Envío de Correos
+
+### SmtpMailService
+
+**Qué es**: Servicio para envío de correos electrónicos con SMTP.
+
+**Para qué se usa**:
+- Enviar emails (bienvenida, notificaciones, reportes)
+- Emails con HTML
+- Adjuntos
+- CC y múltiples destinatarios
+
+**Configuración**:
+```json
+// appsettings.json
+{
+  "EMailSettings": {
+    "From": "noreply@miempresa.com",
+    "Host": "smtp.gmail.com",
+    "Port": 587,
+    "UserName": "user@gmail.com",
+    "Password": "app-password"
+  }
+}
+```
+
+**Características**:
+- ✅ Retry logic con Polly (3 reintentos)
+- ✅ Timeout configurable (30 segundos)
+- ✅ Validación de emails
+- ✅ Soporte para HTML
+- ✅ Attachments y CC
+- ✅ Logging detallado
+
+**Uso**:
+```csharp
+var mailRequest = new MailRequest
+{
+    To = new List<string> { "user@example.com" },
+    Subject = "Welcome!",
+    Body = "<h1>Welcome to our platform</h1>",
+    Cc = new List<string> { "admin@example.com" },
+    Attach = new List<string> { "/path/to/file.pdf" },
+    IsNotification = true
+};
+
+var success = await _smtpMailService.SendAsync(
+    mailRequest, 
+    pathImages: "/images",
+    cancellationToken);
+```
+
+---
+
+### MailKit
+
+**Qué es**: Librería open source para SMTP, POP3 e IMAP.
+
+**Para qué se usa**:
+- Envío de correos (SMTP)
+- Cliente de email robusto
+- Soporte completo de estándares
+
+**Ventajas sobre System.Net.Mail**:
+- ✅ Más moderno y mantenido
+- ✅ Mejor soporte de MIME
+- ✅ Autenticación OAuth2
+- ✅ Certificados SSL/TLS
+- ✅ Async/await nativo
+
+**Documentación**: [MailKit GitHub](https://github.com/jstedfast/MailKit)
+
+---
+
+### Mailpit (SMTP para desarrollo)
+
+**Qué es**: Servidor SMTP moderno para desarrollo y testing.
+
+**Para qué se usa**:
+- Capturar emails en desarrollo sin enviarlos realmente
+- Testing de funcionalidad de correos
+- Debugging de templates de email
+- Visualización de headers y contenido
+
+**Características**:
+- ✅ Interfaz web moderna (http://localhost:8025)
+- ✅ API REST completa
+- ✅ Persistencia con SQLite
+- ✅ Búsqueda y filtrado avanzado
+- ✅ No envía emails reales (seguro)
+
+**Configuración en Docker**: Ver [docs/DOCKER-SETUP.md](DOCKER-SETUP.md)
+
+---
+
+## Resiliencia y Reintentos
+
+### Polly
+
+**Qué es**: Librería para resiliencia y manejo de fallas transitorias.
+
+**Para qué se usa**:
+- Retry policies (reintentos automáticos)
+- Circuit breaker
+- Timeout policies
+- Fallback strategies
+
+**Políticas implementadas**:
+
+**1. Retry con Exponential Backoff**:
+```csharp
+_retryPolicy = Policy
+    .Handle<SocketException>()
+    .Or<TimeoutException>()
+    .Or<IOException>()
+    .WaitAndRetryAsync(
+        retryCount: 3,
+        sleepDurationProvider: retryAttempt => 
+            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+        onRetry: (exception, timeSpan, retryCount, context) =>
+        {
+            _logger.LogWarning(exception, 
+                "Retry {RetryCount} after {Delay}s", 
+                retryCount, timeSpan.TotalSeconds);
+        });
+```
+
+**Delays**:
+- Intento 1: Inmediato
+- Intento 2: Espera 2 segundos (2^1)
+- Intento 3: Espera 4 segundos (2^2)
+- Intento 4: Espera 8 segundos (2^3)
+
+**Uso en SmtpMailService**:
+```csharp
+// Se ejecuta con retry automático
+await _retryPolicy.ExecuteAsync(async () =>
+{
+    await SendEmailAsync(request, pathImages, cancellationToken);
+});
+```
+
+**Excepciones manejadas**:
+- `SocketException`: Problemas de red
+- `TimeoutException`: Timeout de conexión
+- `IOException`: Errores de I/O
+
+**Ventajas**:
+- ✅ Manejo automático de fallas transitorias
+- ✅ Exponential backoff para no saturar el servidor
+- ✅ Logging de reintentos
+- ✅ Código más limpio (sin try-catch anidados)
+
+**Documentación**: [Polly GitHub](https://github.com/App-vNext/Polly)
+
+---
+
+## Mejoras Implementadas
+
+### 1. UploadFileCommand (Mejorado)
+
+**Mejoras**:
+- ✅ Validación fail-fast (valida todo antes de procesar)
+- ✅ Transacciones con rollback automático
+- ✅ Cleanup de archivos físicos en caso de error
+- ✅ Logging estructurado con Serilog.Context
+- ✅ Invalidación de caché automática
+- ✅ Mejor manejo de excepciones
+
+**Flujo**:
+1. Validar archivos (extensión, tamaño)
+2. Iniciar transacción
+3. Guardar archivos físicos
+4. Crear registros en BD
+5. Confirmar transacción
+6. Si hay error: Rollback + Cleanup
+
+**Código**: `src/Core/Application/Features/Utilities/UploadFiles/Commands/Create/`
+
+---
+
+### 2. VoidUploadedFileCommand (Mejorado)
+
+**Mejoras**:
+- ✅ Validación de GUID con manejo específico
+- ✅ Opción de eliminación física del archivo
+- ✅ Logging detallado con información contextual
+- ✅ No falla si el archivo físico no existe
+- ✅ Invalidación de caché
+- ✅ Mensaje de éxito que incluye el nombre del archivo
+
+**Opciones**:
+- Soft delete (default): Solo marca como inactivo en BD
+- Physical delete: También elimina el archivo físico
+
+**Código**: `src/Core/Application/Features/Utilities/UploadFiles/Commands/VoidFile/`
+
+---
+
+### 3. SmtpMailService (Mejorado)
+
+**Mejoras**:
+- ✅ Polly para retry logic (3 reintentos con exponential backoff)
+- ✅ Validación completa de request (formato de email, campos requeridos)
+- ✅ Timeout de 30 segundos configurable
+- ✅ Desconexión garantizada incluso en errores
+- ✅ Logging de reintentos y errores
+- ✅ Manejo de excepciones transitórias
+
+**Validaciones**:
+- Request no nulo
+- Al menos un destinatario
+- Formato de email válido
+- Subject y Body no vacíos
+
+**Código**: `src/Infrastructure/Shared/Services/SmtpMailService.cs`
+
+---
+
 ## 📚 Recursos
 
 - [Microsoft .NET Documentation](https://docs.microsoft.com/dotnet/)
@@ -529,6 +860,12 @@ result.Items.Should().HaveCount(5);
 - [FluentValidation Docs](https://docs.fluentvalidation.net/)
 - [AutoMapper Docs](https://docs.automapper.org/)
 - [Serilog Documentation](https://serilog.net/)
+- [Polly Documentation](https://github.com/App-vNext/Polly)
+- [MailKit Documentation](https://github.com/jstedfast/MailKit)
+
+**Ejemplos completos**:
+- Ver ejemplos de archivos y correos en [docs/EJEMPLOS.md](EJEMPLOS.md)
+- Ver tests en `tests/Tests/Application/Utilities/` y `tests/Tests/Infrastructure/Services/`
 
 ---
 

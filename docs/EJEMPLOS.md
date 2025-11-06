@@ -529,12 +529,578 @@ Ver ejemplos completos en `GetPaginatedCategoriesQueryHandler`.
 
 ---
 
+### 4. Manejo de Archivos - Upload
+
+```csharp
+public class UploadFileCommand : IRequest<Result<bool>>
+{
+    public List<IFormFile>? Files { get; set; }
+    public string? Type { get; set; }
+    public string? Reference { get; set; }
+    public string? Comment { get; set; }
+}
+
+public class UploadFileCommandHandler(
+    IUnitOfWork _unitOfWork,
+    IConfiguration _configuration,
+    IFileStorageService _fileStorageService,
+    ICacheInvalidationService _cacheInvalidationService,
+    ILogger<UploadFileCommandHandler> _logger) 
+    : IRequestHandler<UploadFileCommand, Result<bool>>
+{
+    private readonly long _maxFileSize = 3000000; // 3MB
+
+    public async Task<Result<bool>> Handle(
+        UploadFileCommand request, 
+        CancellationToken cancellationToken)
+    {
+        var uploadedFiles = new List<UploadedFile>();
+        var savedFiles = new List<string>();
+
+        using (LogContext.PushProperty("FileCount", request.Files?.Count ?? 0))
+        {
+            try
+            {
+                // 1. Validaciones tempranas (fail fast)
+                ThrowException.Exception.IfNull(request.Files, "Files list cannot be null");
+                
+                if (request.Files!.Count == 0)
+                {
+                    throw new BadRequestException("At least one file must be provided");
+                }
+
+                var path = _configuration["FilesPaths:TestPath"];
+                if (string.IsNullOrEmpty(path))
+                {
+                    throw new BadRequestException("FilesPaths:TestPath configuration is missing");
+                }
+
+                // 2. Validar extensiones y tamaños
+                var extensions = FileValidExtensions.ValidFiles;
+                foreach (var file in request.Files)
+                {
+                    var extFile = Path.GetExtension(file.FileName);
+                    
+                    if (!extensions.Contains(extFile))
+                    {
+                        throw new BadRequestException(
+                            $"El Archivo [{file.FileName}] no tiene una extensión válida");
+                    }
+
+                    if (file.Length > _maxFileSize)
+                    {
+                        throw new BadRequestException(
+                            $"El Archivo [{file.FileName}] excede el tamaño máximo");
+                    }
+                }
+
+                // 3. Iniciar transacción
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+                try
+                {
+                    var fileRepository = _unitOfWork.Repository<UploadedFile>();
+
+                    // 4. Procesar cada archivo
+                    foreach (var formFile in request.Files)
+                    {
+                        // Guardar archivo físico
+                        var filePath = await _fileStorageService.SaveFileAsync(
+                            formFile,
+                            path!,
+                            cancellationToken: cancellationToken);
+
+                        savedFiles.Add(filePath);
+
+                        // Crear registro en BD
+                        var uploadedFile = new UploadedFile
+                        {
+                            Name = formFile.FileName,
+                            Type = request.Type,
+                            Reference = request.Reference,
+                            Size = Convert.ToDecimal(formFile.Length / 1024f / 1024f),
+                            Comment = request.Comment,
+                            Extension = Path.GetExtension(formFile.FileName),
+                            Path = filePath
+                        };
+
+                        await fileRepository.AddAsync(uploadedFile, cancellationToken);
+                        uploadedFiles.Add(uploadedFile);
+                    }
+
+                    // 5. Confirmar transacción
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                    // 6. Invalidar caché
+                    await _cacheInvalidationService
+                        .InvalidateEntityListCacheAsync<UploadedFile>(cancellationToken);
+
+                    _logger.LogInformation("Files uploaded successfully. Total: {Count}", 
+                        uploadedFiles.Count);
+
+                    return Result<bool>.Success(true, uploadedFiles.Count, 
+                        $"{uploadedFiles.Count} archivo(s) subido(s) exitosamente");
+                }
+                catch (Exception)
+                {
+                    // Rollback de transacción
+                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+
+                    // Cleanup de archivos físicos guardados
+                    await CleanupSavedFiles(savedFiles, cancellationToken);
+
+                    throw;
+                }
+            }
+            catch (BadRequestException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                var message = ErrorMessageFormatter.Format(ex, ErrorMessage.ErrorCreating);
+                _logger.LogError(ex, "Error uploading files");
+                throw new InternalServerError(message, ex);
+            }
+        }
+    }
+
+    private async Task CleanupSavedFiles(
+        List<string> filePaths, 
+        CancellationToken cancellationToken)
+    {
+        foreach (var filePath in filePaths)
+        {
+            try
+            {
+                await _fileStorageService.DeleteFileAsync(filePath, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to cleanup file: {FilePath}", filePath);
+            }
+        }
+    }
+}
+```
+
+**Puntos clave**:
+- ✅ Validación fail-fast antes de procesamiento
+- ✅ Transacción con rollback automático
+- ✅ Cleanup de archivos físicos en caso de error
+- ✅ Validación de extensiones y tamaño
+- ✅ Logging estructurado con contexto
+- ✅ Invalidación de caché
+
+**Uso desde Controller**:
+```csharp
+[HttpPost("upload")]
+public async Task<ActionResult<Result<bool>>> UploadFiles([FromForm] UploadFileCommand command)
+{
+    var result = await _mediator.Send(command);
+    return Ok(result);
+}
+```
+
+**Uso desde cliente**:
+```javascript
+const formData = new FormData();
+formData.append('Files', file1);
+formData.append('Files', file2);
+formData.append('Type', 'Invoice');
+formData.append('Reference', 'INV-2024-001');
+
+const response = await fetch('/api/files/upload', {
+    method: 'POST',
+    body: formData
+});
+```
+
+---
+
+### 5. Manejo de Archivos - Eliminación
+
+```csharp
+public class VoidUploadedFileCommand : IRequest<Result<string>>
+{
+    public string? Id { get; set; }
+    public bool PhysicalDelete { get; set; } = false; // Opción para eliminar archivo físico
+}
+
+public class VoidUploadedFileCommandHandler(
+    IUnitOfWork _unitOfWork,
+    IFileStorageService _fileStorageService,
+    ICacheInvalidationService _cacheInvalidationService,
+    ILogger<VoidUploadedFileCommandHandler> _logger) 
+    : IRequestHandler<VoidUploadedFileCommand, Result<string>>
+{
+    public async Task<Result<string>> Handle(
+        VoidUploadedFileCommand request, 
+        CancellationToken cancellationToken)
+    {
+        using (LogContext.PushProperty("FileId", request.Id))
+        {
+            try
+            {
+                // 1. Validar GUID
+                Guid fileId;
+                try
+                {
+                    fileId = Guid.Parse(request.Id!);
+                }
+                catch (FormatException ex)
+                {
+                    _logger.LogWarning(ex, "Invalid GUID format");
+                    throw;
+                }
+
+                var repoUploadFile = _unitOfWork.Repository<UploadedFile>();
+
+                // 2. Buscar archivo
+                var existUploadFile = await repoUploadFile.GetFirstAsync(
+                    x => x.Id == fileId && (bool)x.Active!, 
+                    cancellationToken)!;
+
+                ThrowException.Exception.IfObjectClassNull(existUploadFile, fileId);
+
+                // 3. Soft delete (marcar como inactivo)
+                existUploadFile!.Active = false;
+                await repoUploadFile.UpdateAsync(existUploadFile, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation("File marked as inactive. Name: {FileName}", 
+                    existUploadFile.Name);
+
+                // 4. Eliminación física (opcional)
+                if (request.PhysicalDelete && !string.IsNullOrEmpty(existUploadFile.Path))
+                {
+                    try
+                    {
+                        var deleted = await _fileStorageService
+                            .DeleteFileAsync(existUploadFile.Path, cancellationToken);
+                        
+                        if (deleted)
+                        {
+                            _logger.LogInformation("Physical file deleted. Path: {FilePath}", 
+                                existUploadFile.Path);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error deleting physical file");
+                        // No lanzamos excepción - el registro en BD ya fue actualizado
+                    }
+                }
+
+                // 5. Invalidar caché
+                await _cacheInvalidationService
+                    .InvalidateEntityListCacheAsync<UploadedFile>(cancellationToken);
+
+                var message = $"El registro [{request.Id}] ({existUploadFile.Name}), " +
+                             $"ha sido eliminado de la entidad *UploadedFile* correctamente!";
+                return Result<string>.Success(request.Id!, 1, message);
+            }
+            catch (FormatException)
+            {
+                throw;
+            }
+            catch (NotFoundException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                var message = ErrorMessageFormatter.Format(ex, ErrorMessage.ErrorDeleting);
+                _logger.LogError(ex, "Error voiding file");
+                throw new InternalServerError(message, ex);
+            }
+        }
+    }
+}
+```
+
+**Puntos clave**:
+- ✅ Soft delete por defecto (mantiene registro en BD)
+- ✅ Opción de eliminación física del archivo
+- ✅ Validación de GUID con manejo específico
+- ✅ No falla si el archivo físico no existe
+- ✅ Logging detallado
+- ✅ Invalidación de caché
+
+**Uso desde Controller**:
+```csharp
+[HttpDelete("{id}")]
+public async Task<ActionResult<Result<string>>> VoidFile(
+    string id, 
+    [FromQuery] bool physicalDelete = false)
+{
+    var result = await _mediator.Send(new VoidUploadedFileCommand 
+    { 
+        Id = id, 
+        PhysicalDelete = physicalDelete 
+    });
+    return Ok(result);
+}
+```
+
+---
+
+### 6. Envío de Correos Electrónicos
+
+```csharp
+public interface ISmtpMailService
+{
+    Task<bool> SendAsync(
+        MailRequest request, 
+        string? pathImages = null, 
+        CancellationToken cancellationToken = default);
+}
+
+public class SmtpMailService : ISmtpMailService
+{
+    private readonly EMailSettings? _emailSettings;
+    private readonly ILogger<SmtpMailService> _logger;
+    private readonly AsyncRetryPolicy _retryPolicy;
+    private readonly int _timeoutSeconds = 30;
+
+    public SmtpMailService(
+        IOptions<EMailSettings> mailSettings, 
+        ILogger<SmtpMailService> logger)
+    {
+        _emailSettings = mailSettings.Value;
+        _logger = logger;
+
+        // Configurar Polly para retry logic
+        _retryPolicy = Policy
+            .Handle<SocketException>()
+            .Or<TimeoutException>()
+            .Or<IOException>()
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: retryAttempt => 
+                    TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), // Exponential backoff
+                onRetry: (exception, timeSpan, retryCount, context) =>
+                {
+                    _logger.LogWarning(exception, 
+                        "Retry {RetryCount} after {Delay}s due to {ExceptionType}",
+                        retryCount, timeSpan.TotalSeconds, exception.GetType().Name);
+                });
+    }
+
+    public async Task<bool> SendAsync(
+        MailRequest request, 
+        string? pathImages = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            // 1. Validar request
+            if (!ValidateRequest(request))
+            {
+                return false;
+            }
+
+            _logger.LogInformation("Sending email to: {Recipients}, Subject: {Subject}",
+                string.Join(", ", request.To), request.Subject);
+
+            // 2. Ejecutar con retry policy
+            await _retryPolicy.ExecuteAsync(async () =>
+            {
+                await SendEmailAsync(request, pathImages, cancellationToken);
+            });
+
+            _logger.LogInformation("Email sent successfully");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send email after retries");
+            return false;
+        }
+    }
+
+    private async Task SendEmailAsync(
+        MailRequest request, 
+        string? pathImages, 
+        CancellationToken cancellationToken)
+    {
+        using var smtp = new SmtpClient
+        {
+            Timeout = _timeoutSeconds * 1000
+        };
+
+        try
+        {
+            var email = BuildEmailMessage(request, pathImages);
+
+            using var cts = CancellationTokenSource
+                .CreateLinkedTokenSource(cancellationToken);
+            cts.CancelAfter(TimeSpan.FromSeconds(_timeoutSeconds));
+
+            await smtp.ConnectAsync(
+                _emailSettings!.Host, 
+                _emailSettings.Port, 
+                SecureSocketOptions.StartTlsWhenAvailable, 
+                cts.Token);
+
+            await smtp.AuthenticateAsync(
+                _emailSettings.UserName, 
+                _emailSettings.Password, 
+                cts.Token);
+
+            await smtp.SendAsync(email, cts.Token);
+            await smtp.DisconnectAsync(true, cts.Token);
+        }
+        catch (Exception)
+        {
+            // Asegurar desconexión en caso de error
+            if (smtp.IsConnected)
+            {
+                try
+                {
+                    await smtp.DisconnectAsync(true, CancellationToken.None);
+                }
+                catch (Exception disconnectEx)
+                {
+                    _logger.LogWarning(disconnectEx, "Error disconnecting SMTP");
+                }
+            }
+            throw;
+        }
+    }
+
+    private bool ValidateRequest(MailRequest request)
+    {
+        if (request?.To == null || request.To.Count == 0)
+        {
+            _logger.LogWarning("Email request has no recipients");
+            return false;
+        }
+
+        foreach (var email in request.To)
+        {
+            if (!IsValidEmail(email))
+            {
+                _logger.LogWarning("Invalid email format: {Email}", email);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+}
+```
+
+**Puntos clave**:
+- ✅ **Polly** para retry logic con exponential backoff
+- ✅ 3 reintentos automáticos para errores transitorios
+- ✅ Timeout configurable (30 segundos)
+- ✅ Validación completa de request
+- ✅ Desconexión garantizada incluso en errores
+- ✅ Logging detallado de reintentos y errores
+
+**Configuración en appsettings.json**:
+
+**Para Desarrollo (con Mailpit):**
+```json
+{
+  "EMailSettings": {
+    "From": "noreply@test.com",
+    "Host": "localhost",
+    "Port": 1025,
+    "UserName": "",
+    "Password": ""
+  }
+}
+```
+
+**Para Producción:**
+```json
+{
+  "EMailSettings": {
+    "From": "noreply@miempresa.com",
+    "Host": "smtp.gmail.com",
+    "Port": 587,
+    "UserName": "user@gmail.com",
+    "Password": "app-password"
+  }
+}
+```
+
+**Uso desde Handler**:
+```csharp
+public class SendWelcomeEmailCommandHandler(
+    ISmtpMailService _mailService) 
+    : IRequestHandler<SendWelcomeEmailCommand, Result<bool>>
+{
+    public async Task<Result<bool>> Handle(...)
+    {
+        var mailRequest = new MailRequest
+        {
+            To = new List<string> { user.Email },
+            Subject = "Bienvenido a la plataforma",
+            Body = "<h1>Bienvenido!</h1><p>Gracias por registrarte.</p>",
+            Cc = new List<string> { "admin@company.com" },
+            Attach = new List<string> { "/path/to/manual.pdf" }
+        };
+
+        var success = await _mailService.SendAsync(
+            mailRequest, 
+            pathImages: "/path/to/images",
+            cancellationToken);
+
+        if (success)
+        {
+            return Result<bool>.Success(true, 1, "Email sent successfully");
+        }
+
+        return Result<bool>.Fail("Failed to send email");
+    }
+}
+```
+
+**Extensiones válidas de archivo**:
+```csharp
+// src/Infrastructure/Shared/Services/Enums/FileValidExtensions.cs
+public struct FileValidExtensions
+{
+    public static List<string> ValidFiles => new List<string>
+    {
+        ".doc", ".docx",   // Word
+        ".pdf",            // PDF
+        ".xls", ".xlsx",   // Excel
+        ".ppt", ".pptx",   // PowerPoint
+        ".txt", ".xml",    // Texto
+        ".jpg", ".jpeg",   // Imágenes
+        ".png"
+    };
+}
+```
+
+---
+
 ## 📚 Recursos
 
 - Revisa los ejemplos completos en `src/Core/Application/Features/Examples/`
+- Ver implementaciones de archivos en `src/Core/Application/Features/Utilities/UploadFiles/`
+- Ver servicio de email en `src/Infrastructure/Shared/Services/SmtpMailService.cs`
 - Consulta los tests en `tests/Tests/` para ver patrones de uso
 - Ver documentación de cada herramienta en [docs/HERRAMIENTAS.md](HERRAMIENTAS.md)
-- Ver mejoras implementadas en [docs/MEJORAS_IMPLEMENTADAS.md](MEJORAS_IMPLEMENTADAS.md)
+- Ver mejoras implementadas en [docs/RESUMEN_MEJORAS.md](RESUMEN_MEJORAS.md)
 
 ---
 

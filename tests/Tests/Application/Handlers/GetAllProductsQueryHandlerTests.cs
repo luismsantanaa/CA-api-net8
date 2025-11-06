@@ -7,7 +7,9 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Persistence.Caching.Contracts;
+using Persistence.Caching.Extensions;
 using Persistence.Repositories.Contracts;
+using Persistence.Specification.Contracts;
 using Tests.Helpers;
 
 namespace Tests.Application.Handlers
@@ -52,25 +54,19 @@ namespace Tests.Application.Handlers
                 new(products[1].Id, "Product 2", "", null, 0, Guid.Empty, null)
             };
 
-            var cacheKey = "products_list";
-            _cacheKeyServiceMock.Setup(c => c.GetListKey(typeof(ProductVm).Name))
-                .Returns(cacheKey);
-
-            _cacheServiceMock.Setup(c => c.GetAsync<IReadOnlyList<ProductVm>>(cacheKey, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((IReadOnlyList<ProductVm>?)null);
-
             var repositoryMock = new Mock<IGenericRepository<TestProduct>>();
-            repositoryMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
+            // GetAllWithSpec is used instead of GetAllAsync
+            repositoryMock.Setup(r => r.GetAllWithSpec(It.IsAny<ISpecification<TestProduct>>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(products);
 
             _repositoryFactoryMock.Setup(f => f.GetRepository<TestProduct>())
                 .Returns(repositoryMock.Object);
 
-            _mapperMock.Setup(m => m.Map<IReadOnlyList<ProductVm>>(products))
+            _mapperMock.Setup(m => m.Map<List<ProductVm>>(It.IsAny<IReadOnlyList<TestProduct>>()))
                 .Returns(productVms);
 
             // Act
-            var result = await handler.Handle(new GetAllProductsQuery(), CancellationToken.None);
+            var result = await handler.Handle(new GetAllProductsQuery { EnableCache = false }, CancellationToken.None);
 
             // Assert
             result.Should().NotBeNull();
@@ -78,18 +74,8 @@ namespace Tests.Application.Handlers
             result.Items.Should().NotBeNull();
             result.Items.Should().HaveCount(2);
 
-            // Verify cache operations
-            _cacheServiceMock.Verify(c => c.GetAsync<IReadOnlyList<ProductVm>>(
-                cacheKey,
-                It.IsAny<CancellationToken>()),
-                Times.Once);
-
-            _cacheServiceMock.Verify(c => c.SetAsync(
-                cacheKey,
-                It.IsAny<IReadOnlyList<ProductVm>>(),
-                It.IsAny<TimeSpan>(),
-                It.IsAny<TimeSpan>(),
-                It.IsAny<CancellationToken>()));
+            // Verify repository was called
+            repositoryMock.Verify(r => r.GetAllWithSpec(It.IsAny<ISpecification<TestProduct>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -113,11 +99,13 @@ namespace Tests.Application.Handlers
             _cacheKeyServiceMock.Setup(c => c.GetListKey(typeof(ProductVm).Name))
                 .Returns(cacheKey);
 
-            _cacheServiceMock.Setup(c => c.GetAsync<IReadOnlyList<ProductVm>>(cacheKey, It.IsAny<CancellationToken>()))
+            // Mock GetAsync to return cached data (simulating cache hit)
+            // GetOrSetAsync is an extension method that uses GetAsync internally
+            _cacheServiceMock.Setup(c => c.GetAsync<List<ProductVm>>(cacheKey, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(cachedProductVms);
 
             // Act
-            var result = await handler.Handle(new GetAllProductsQuery(), CancellationToken.None);
+            var result = await handler.Handle(new GetAllProductsQuery { EnableCache = true }, CancellationToken.None);
 
             // Assert
             result.Should().NotBeNull();
@@ -125,13 +113,10 @@ namespace Tests.Application.Handlers
             result.Items.Should().NotBeNull();
             result.Items.Should().HaveCount(2);
 
-            // Verify cache hit
-            _cacheServiceMock.Verify(c => c.GetAsync<IReadOnlyList<ProductVm>>(
-                cacheKey,
-                It.IsAny<CancellationToken>()),
-                Times.Once);
-
-            // Verify repository was not called
+            // Verify cache was checked
+            _cacheServiceMock.Verify(c => c.GetAsync<List<ProductVm>>(cacheKey, It.IsAny<CancellationToken>()), Times.Once);
+            
+            // Verify repository was NOT called (because data was in cache)
             _repositoryFactoryMock.Verify(f => f.GetRepository<TestProduct>(), Times.Never);
         }
 
@@ -146,31 +131,31 @@ namespace Tests.Application.Handlers
                _logger,
                _repositoryFactoryMock.Object);
 
-            var cacheKey = "products_list";
-            _cacheKeyServiceMock.Setup(c => c.GetListKey(typeof(ProductVm).Name))
-                .Returns(cacheKey);
-
-            _cacheServiceMock.Setup(c => c.GetAsync<IReadOnlyList<ProductVm>>(cacheKey, It.IsAny<CancellationToken>()))
-                .ReturnsAsync((IReadOnlyList<ProductVm>?)null);
+            var emptyProducts = new List<TestProduct>(); // Empty list, not null
+            var emptyProductVms = new List<ProductVm>();
 
             var repositoryMock = new Mock<IGenericRepository<TestProduct>>();
-            repositoryMock.Setup(r => r.GetAllAsync(It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new List<TestProduct>());
+            // Return empty list (not null) so IfClassNull doesn't throw
+            repositoryMock.Setup(r => r.GetAllWithSpec(It.IsAny<ISpecification<TestProduct>>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(emptyProducts);
 
             _repositoryFactoryMock.Setup(f => f.GetRepository<TestProduct>())
                 .Returns(repositoryMock.Object);
 
-            _mapperMock.Setup(m => m.Map<IReadOnlyList<ProductVm>>(It.IsAny<List<TestProduct>>()))
-                .Returns(new List<ProductVm>());
+            _mapperMock.Setup(m => m.Map<List<ProductVm>>(It.IsAny<IReadOnlyList<TestProduct>>()))
+                .Returns(emptyProductVms);
 
             // Act
-            var result = await handler.Handle(new GetAllProductsQuery(), CancellationToken.None);
+            var result = await handler.Handle(new GetAllProductsQuery { EnableCache = false }, CancellationToken.None);
 
             // Assert
             result.Should().NotBeNull();
             result.Succeeded.Should().BeTrue();
             result.Items.Should().NotBeNull();
             result.Items.Should().BeEmpty();
+
+            // Verify repository was called
+            repositoryMock.Verify(r => r.GetAllWithSpec(It.IsAny<ISpecification<TestProduct>>(), It.IsAny<CancellationToken>()), Times.Once);
         }
     }
 }

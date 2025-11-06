@@ -5,7 +5,7 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
 ## 🚀 Para Empezar
 
 - **[README.md](../README.md)** - Inicio rápido, características principales, configuración básica
-- **[ESTRUCTURA_PROYECTO.md](ESTRUCTURA_PROYECTO.md)** - Organización de carpetas y estructura del proyecto
+- **[ESTRUCTURA_COMPLETA.md](ESTRUCTURA_COMPLETA.md)** - Organización de carpetas y estructura del proyecto
 
 ## 📚 Guías de Desarrollo
 
@@ -23,12 +23,11 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
   - Implementación paso a paso
   - Ejemplos completos
   - Mejores prácticas
-- **[MEJORAS_IMPLEMENTADAS.md](MEJORAS_IMPLEMENTADAS.md)** - Helpers y servicios disponibles
+- **[RESUMEN_MEJORAS.md](RESUMEN_MEJORAS.md)** - Resumen ejecutivo de mejoras
   - Handler Base para Paginación
   - Servicio de Invalidación de Caché
   - Helpers para Result<T>
   - Extensiones para Handlers
-- **[RESUMEN_MEJORAS.md](RESUMEN_MEJORAS.md)** - Resumen ejecutivo de mejoras
 
 ## 🏗️ Arquitectura y Diseño
 
@@ -49,6 +48,9 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
   - Autenticación (JWT, Identity)
   - Logging (Serilog)
   - Caching (Memory, Redis)
+  - **Manejo de Archivos (IFileStorageService)**
+  - **Envío de Correos (SmtpMailService, MailKit)**
+  - **Resiliencia (Polly - Retry Logic)**
   - Testing (xUnit, Moq)
 
 ## 💡 Ejemplos y Mejores Prácticas
@@ -57,6 +59,8 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
   - Ejemplos completos de Handlers
   - Ejemplos de Validators
   - Ejemplos de Controllers
+  - **Manejo de Archivos (Upload y Delete con transacciones)**
+  - **Envío de Correos Electrónicos (con retry logic)**
   - Mejores prácticas
   - Patrones comunes
   - Casos de uso avanzados
@@ -85,7 +89,7 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
 
 **Revisa:**
 1. [ARQUITECTURA.md](ARQUITECTURA.md) - Decisiones de diseño
-2. [ESTRUCTURA_PROYECTO.md](ESTRUCTURA_PROYECTO.md) - Organización del proyecto
+2. [ESTRUCTURA_COMPLETA.md](ESTRUCTURA_COMPLETA.md) - Organización del proyecto
 3. Todo el código fuente en `src/` para patrones implementados
 
 ## 🔍 Búsqueda Rápida
@@ -97,13 +101,15 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
 - **Un Query con Paginación**: [PAGINACION.md](PAGINACION.md)
 - **Un Validator**: [GUIA_DESARROLLO.md#4-crear-validators](GUIA_DESARROLLO.md#4-crear-validators)
 - **Un Controller**: [GUIA_DESARROLLO.md#6-crear-controllers](GUIA_DESARROLLO.md#6-crear-controllers)
+- **Upload de Archivos**: [EJEMPLOS.md#4-manejo-de-archivos---upload](EJEMPLOS.md#4-manejo-de-archivos---upload)
+- **Envío de Correos**: [EJEMPLOS.md#6-envío-de-correos-electrónicos](EJEMPLOS.md#6-envío-de-correos-electrónicos)
 
 ### ¿Qué helpers y servicios están disponibles?
 
-- **Helpers para Result<T>**: [MEJORAS_IMPLEMENTADAS.md#4-helpers-para-resultt](MEJORAS_IMPLEMENTADAS.md#4-helpers-para-resultt)
-- **Servicio de Invalidación de Caché**: [MEJORAS_IMPLEMENTADAS.md#3-servicio-de-invalidación-de-caché-automática](MEJORAS_IMPLEMENTADAS.md#3-servicio-de-invalidación-de-caché-automática)
-- **Handler Base para Paginación**: [MEJORAS_IMPLEMENTADAS.md#1-handler-base-para-paginación](MEJORAS_IMPLEMENTADAS.md#1-handler-base-para-paginación)
-- **Extensiones para Handlers**: [MEJORAS_IMPLEMENTADAS.md#5-extensiones-para-handlers-comunes](MEJORAS_IMPLEMENTADAS.md#5-extensiones-para-handlers-comunes)
+- **Helpers para Result<T>**: [RESUMEN_MEJORAS.md#3-helpers-para-resultt](RESUMEN_MEJORAS.md#3-helpers-para-resultt)
+- **Servicio de Invalidación de Caché**: [RESUMEN_MEJORAS.md#2-servicio-de-invalidación-de-caché](RESUMEN_MEJORAS.md#2-servicio-de-invalidación-de-caché)
+- **Handler Base para Paginación**: [RESUMEN_MEJORAS.md#1-handler-base-para-paginación](RESUMEN_MEJORAS.md#1-handler-base-para-paginación)
+- **Extensiones para Handlers**: [RESUMEN_MEJORAS.md#4-extensiones-para-handlers](RESUMEN_MEJORAS.md#4-extensiones-para-handlers)
 
 ### ¿Cómo funciona...?
 

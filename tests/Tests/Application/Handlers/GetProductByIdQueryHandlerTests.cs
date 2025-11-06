@@ -80,9 +80,9 @@ namespace Tests.Application.Handlers
             result.Items.Title.Should().Be(productVm.Title);
             result.Items.Description.Should().Be(productVm.Description);
             result.Items.Price.Should().Be(productVm.Price);
-            
+
             repositoryMock.Verify(r => r.GetOneWithSpec(
-                It.IsAny<ISpecification<TestProduct>>(), 
+                It.IsAny<ISpecification<TestProduct>>(),
                 It.IsAny<CancellationToken>()), Times.Once);
             _mapperMock.Verify(m => m.Map<ProductVm>(productEntity), Times.Once);
         }
@@ -103,8 +103,10 @@ namespace Tests.Application.Handlers
             };
 
             var repositoryMock = new Mock<IGenericRepository<TestProduct>>();
-            repositoryMock.Setup(r => r.GetOneWithSpec(It.IsAny<ISpecification<TestProduct>>(), It.IsAny<CancellationToken>()))
+#pragma warning disable CS8620 // Nullability mismatch in test mock setup
+            repositoryMock.Setup(r => r.GetOneWithSpec(It.IsAny<ISpecification<TestProduct>>(), It.IsAny<CancellationToken>())!)
                 .ReturnsAsync((TestProduct?)null); // Product doesn't exist
+#pragma warning restore CS8620
 
             _repositoryFactoryMock.Setup(r => r.GetRepository<TestProduct>()).Returns(repositoryMock.Object);
 

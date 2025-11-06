@@ -35,10 +35,10 @@ namespace Tests.Application.Handlers
         {
             // Arrange
             var handler = new UpdateProductCommandHandler(
-                (ICacheInvalidationService)_unitOfWorkMock.Object,          // IUnitOfWork first
-                _mapperMock.Object,              // IMapper second
-                (ILogger<UpdateProductCommandHandler>)_cacheInvalidationServiceMock.Object, // ICacheInvalidationService third
-                (IUnitOfWork)_logger);                        // ILogger fourth
+                _cacheInvalidationServiceMock.Object,  // ICacheInvalidationService first
+                _mapperMock.Object,                     // IMapper second
+                _logger,                                // ILogger third
+                _unitOfWorkMock.Object);                // IUnitOfWork fourth
 
             var productId = Guid.NewGuid();
             var categoryId = Guid.NewGuid();
@@ -63,7 +63,7 @@ namespace Tests.Application.Handlers
             };
 
             var repositoryMock = new Mock<IGenericRepository<TestProduct>>();
-            repositoryMock.Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
+            repositoryMock.Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>())!)
                 .ReturnsAsync(existingProduct);
 
             _unitOfWorkMock.Setup(u => u.Repository<TestProduct>()).Returns(repositoryMock.Object);
@@ -99,10 +99,10 @@ namespace Tests.Application.Handlers
         {
             // Arrange
             var handler = new UpdateProductCommandHandler(
-                (ICacheInvalidationService)_unitOfWorkMock.Object,          // IUnitOfWork first
-                _mapperMock.Object,              // IMapper second
-                (ILogger<UpdateProductCommandHandler>)_cacheInvalidationServiceMock.Object, // ICacheInvalidationService third
-                (IUnitOfWork)_logger);                        // ILogger fourth
+                _cacheInvalidationServiceMock.Object,  // ICacheInvalidationService first
+                _mapperMock.Object,                     // IMapper second
+                _logger,                                // ILogger third
+                _unitOfWorkMock.Object);                // IUnitOfWork fourth
 
             var productId = Guid.NewGuid();
             var request = new UpdateProductCommand
@@ -114,8 +114,10 @@ namespace Tests.Application.Handlers
             };
 
             var repositoryMock = new Mock<IGenericRepository<TestProduct>>();
-            repositoryMock.Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>()))
+#pragma warning disable CS8620 // Nullability mismatch in test mock setup
+            repositoryMock.Setup(r => r.GetByIdAsync(productId, It.IsAny<CancellationToken>())!)
                 .ReturnsAsync((TestProduct?)null); // Product doesn't exist
+#pragma warning restore CS8620
 
             _unitOfWorkMock.Setup(u => u.Repository<TestProduct>()).Returns(repositoryMock.Object);
 
