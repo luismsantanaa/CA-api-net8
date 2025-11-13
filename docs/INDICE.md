@@ -6,6 +6,8 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
 
 - **[README.md](../README.md)** - Inicio rápido, características principales, configuración básica
 - **[ESTRUCTURA_COMPLETA.md](ESTRUCTURA_COMPLETA.md)** - Organización de carpetas y estructura del proyecto
+- **[database/QUICK_START.md](../database/QUICK_START.md)** - ✨ Guía rápida del SQL Server Database Project
+- **[database/RESUMEN_IMPLEMENTACION.md](../database/RESUMEN_IMPLEMENTACION.md)** - ✨ Detalles técnicos de la base de datos
 
 ## 📚 Guías de Desarrollo
 

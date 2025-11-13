@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using Security.Entities.DTOs;
@@ -13,8 +13,8 @@ namespace Tests.Helpers
         /// <summary>
         /// Creates a mock IOptions<JwtSettings> for testing JWT utilities.
         /// </summary>
-        public static IOptions<JwtSettings> CreateJwtSettings(string key = "TestJwtKey123456789012345678901234567890", 
-            string issuer = "test.issuer", 
+        public static IOptions<JwtSettings> CreateJwtSettings(string key = "TestJwtKey123456789012345678901234567890",
+            string issuer = "test.issuer",
             string audience = "test.audience",
             int durationInMinutes = 60)
         {
@@ -26,7 +26,7 @@ namespace Tests.Helpers
                 DurationInMinutes = durationInMinutes,
                 ExpireTime = TimeSpan.FromMinutes(durationInMinutes) // Set ExpireTime
             };
-            
+
             return Options.Create(jwtSettings);
         }
 

@@ -1,6 +1,5 @@
-using Application.DTOs;
+﻿using Application.DTOs.Examples;
 using Application.Features.Examples.Products.Commands;
-using Application.Features.Examples.Products.VMs;
 using AutoMapper;
 using Domain.Entities.Examples;
 using FluentAssertions;
@@ -71,6 +70,9 @@ namespace Tests.Application.Handlers
             _unitOfWorkMock.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
 
             _mapperMock.Setup(m => m.Map<TestProduct>(request)).Returns(productEntity);
+            
+            _cacheInvalidationServiceMock.Setup(c => c.InvalidateEntityCacheAsync<ProductVm>(request.CategoryId, It.IsAny<CancellationToken>()))
+                .Returns(Task.CompletedTask);
 
             // Act
             var result = await handler.Handle(request, CancellationToken.None);

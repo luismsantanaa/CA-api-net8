@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  EJEMPLO DE PERFIL DE PUBLICACIÓN PARA DESARROLLO
+  
+  Para usar este archivo:
+  1. Copia este archivo como "Development.publish.xml" (sin .example)
+  2. Actualiza la contraseña en TargetConnectionString
+  3. NO subas el archivo .publish.xml a Git (ya está en .gitignore)
+  
+  Uso:
+  - En Visual Studio: Click derecho en el proyecto → Publish → Cargar perfil
+  - Desde línea de comandos: 
+    SqlPackage.exe /Action:Publish /SourceFile:CleanArchitectureDb.dacpac /Profile:Development.publish.xml
+-->
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Nombre de la base de datos destino -->
+    <TargetDatabaseName>CleanArchitectureDb</TargetDatabaseName>
+    
+    <!-- Cadena de conexión al servidor SQL Server -->
+    <!-- IMPORTANTE: Actualiza el Password con tu contraseña real -->
+    <TargetConnectionString>Server=localhost,11433;Database=CleanArchitectureDb;User Id=sa;Password=TuPassword123!;TrustServerCertificate=True;</TargetConnectionString>
+    
+    <!-- Opciones de despliegue -->
+    <ProfileVersionNumber>1</ProfileVersionNumber>
+    
+    <!-- Crear la base de datos si no existe -->
+    <CreateNewDatabase>True</CreateNewDatabase>
+    
+    <!-- Generar script de cambios además de aplicarlos -->
+    <GenerateSmartDefaults>True</GenerateSmartDefaults>
+    
+    <!-- Bloquear deployment incremental si hay pérdida de datos -->
+    <BlockOnPossibleDataLoss>True</BlockOnPossibleDataLoss>
+    
+    <!-- Incluir datos transaccionales en comparación -->
+    <IncludeTransactionalScripts>True</IncludeTransactionalScripts>
+    
+    <!-- Hacer backup antes de desplegar -->
+    <BackupDatabaseBeforeChanges>True</BackupDatabaseBeforeChanges>
+    
+    <!-- Ejecutar scripts PostDeployment -->
+    <DeployScriptPostDeployment>True</DeployScriptPostDeployment>
+  </PropertyGroup>
+</Project>
+

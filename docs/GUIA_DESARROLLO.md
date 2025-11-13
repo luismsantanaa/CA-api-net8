@@ -20,7 +20,7 @@ Esta guía te enseñará paso a paso cómo crear un nuevo feature (CRUD completo
 ## 1. Crear una Nueva Entidad
 
 ### Ubicación
-`src/Core/Domain/Entities/[TuDominio]/`
+`src/Domain/Entities/[TuDominio]/`
 
 ### Ejemplo: Crear entidad `Employee`
 
@@ -52,7 +52,7 @@ namespace Domain.Entities.HumanResources
 - ✅ Namespace: `Domain.Entities.[TuDominio]`
 
 ### Referencia
-Ver ejemplo completo: `src/Core/Domain/Entities/Examples/TestProduct.cs`
+Ver ejemplo completo: `src/Domain/Entities/Examples/TestProduct.cs`
 
 ---
 
@@ -61,7 +61,7 @@ Ver ejemplo completo: `src/Core/Domain/Entities/Examples/TestProduct.cs`
 Los **Commands** representan operaciones que **modifican** datos (Create, Update, Delete).
 
 ### Ubicación
-`src/Core/Application/Features/[TuDominio]/[Entidad]/Commands/`
+`src/Application/Features/[TuDominio]/[Entidad]/Commands/`
 
 ### 2.1 Command de Creación
 
@@ -168,7 +168,7 @@ Sigue el mismo patrón. Ver ejemplos:
 Las **Queries** representan operaciones que **leen** datos (GetAll, GetById, etc.).
 
 ### Ubicación
-`src/Core/Application/Features/[TuDominio]/[Entidad]/Queries/`
+`src/Application/Features/[TuDominio]/[Entidad]/Queries/`
 
 ### 3.1 Query para Obtener Todos
 
@@ -311,7 +311,7 @@ public class GetPaginatedProductsQueryHandler : IRequestHandler<GetPaginatedProd
 Los **Validators** usan FluentValidation para validar los requests.
 
 ### Ubicación
-`src/Core/Application/Features/[TuDominio]/[Entidad]/Commands/Validators/`
+`src/Application/Features/[TuDominio]/[Entidad]/Commands/Validators/`
 
 ### Ejemplo: Validator de Creación
 
@@ -410,7 +410,7 @@ Ver ejemplo: `CreateProductValidator.cs`
 Los **View Models** (VMs) son los DTOs que se retornan en las respuestas de la API.
 
 ### Ubicación
-`src/Core/Application/Features/[TuDominio]/[Entidad]/VMs/`
+`src/Application/Features/[TuDominio]/[Entidad]/VMs/`
 
 ### Ejemplo: View Model de Employee
 
@@ -550,7 +550,7 @@ Ver ejemplo: `ProductsController.cs`
 El **AutoMapper** mapea entre Entidades ↔ View Models ↔ Commands.
 
 ### Ubicación
-`src/Core/Application/Mappings/[TuDominio]/`
+`src/Application/Mappings/[TuDominio]/`
 
 ### Ejemplo: Mapping Profile
 
@@ -694,7 +694,7 @@ Al crear un nuevo feature, asegúrate de tener:
 
 ## 📚 Recursos Adicionales
 
-- **Ejemplos Completos**: Revisa `src/Core/Application/Features/Examples/Products/`
+- **Ejemplos Completos**: Revisa `src/Application/Features/Examples/Products/`
 - **Tests**: Revisa `tests/Tests/Application/Handlers/` para ver ejemplos de testing
 - **Arquitectura**: Consulta [docs/ARQUITECTURA.md](ARQUITECTURA.md)
 - **Mejoras Implementadas**: Consulta [docs/MEJORAS_IMPLEMENTADAS.md](MEJORAS_IMPLEMENTADAS.md) para ver helpers y servicios disponibles

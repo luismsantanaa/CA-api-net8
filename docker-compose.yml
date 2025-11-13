@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image:  mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sossa-db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Mardom01
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - /home/lsantana/sqlserver-data:/var/opt/mssql
+    user: root
+    networks:
+      - sossa-network
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Mardom01 -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # Redis Cache
+  redis:
+    image: redis:7.0.8-alpine
+    container_name: sossa-redis
+    ports:
+      - "16379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - sossa-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Mailpit SMTP Server (para pruebas y desarrollo)
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: sossa-mailpit
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI
+    environment:
+      MP_MAX_MESSAGES: 5000
+      MP_DATA_FILE: /data/mailpit.db
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+    volumes:
+      - mailpit-data:/data
+    networks:
+      - sossa-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+networks:
+  sossa-network:
+    driver: bridge
+
+volumes:
+  sqlserver-data:
+    driver: local
+  redis-data:
+    driver: local
+  mailpit-data:
+    driver: local
+

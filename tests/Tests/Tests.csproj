@@ -30,16 +30,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Core\Application\Application.csproj" />
-    <ProjectReference Include="..\..\src\Infrastructure\Persistence\Persistence.csproj" />
-    <ProjectReference Include="..\..\src\Infrastructure\Security\Security.csproj" />
-    <ProjectReference Include="..\..\src\Presentation\AppApi\AppApi.csproj" />
-    <ProjectReference Include="..\..\src\Core\Domain\Domain.csproj" />
-    <ProjectReference Include="..\..\src\Infrastructure\Shared\Shared.csproj" />
+    <Folder Include="Controllers\" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\..\src\AppApi\AppApi.csproj" />
+    <ProjectReference Include="..\..\src\Application\Application.csproj" />
+    <ProjectReference Include="..\..\src\Domain\Domain.csproj" />
+    <ProjectReference Include="..\..\src\Persistence\Persistence.csproj" />
+    <ProjectReference Include="..\..\src\Security\Security.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-using AppApi.Authorization;
+﻿using AppApi.Authorization;
 using AppApi.Services;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
@@ -31,11 +31,11 @@ namespace Tests.Services
             // Arrange
             var userId = TestFixture.CreateTestUserId();
             var token = "Bearer valid.token.here";
-            
+
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["Authorization"] = token;
             _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
-            
+
             _jwtUtilsMock.Setup(x => x.GetClaim(token, "uid")).Returns(userId.ToString());
 
             var service = new GetUserService(_httpContextAccessorMock.Object, _jwtUtilsMock.Object, _logger);
@@ -87,7 +87,7 @@ namespace Tests.Services
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["Authorization"] = token;
             _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
-            
+
             _jwtUtilsMock.Setup(x => x.GetClaim(token, "uid")).Returns("invalid-guid-format");
 
             var service = new GetUserService(_httpContextAccessorMock.Object, _jwtUtilsMock.Object, _logger);
@@ -105,11 +105,11 @@ namespace Tests.Services
             // Arrange
             var userId = TestFixture.CreateTestUserId();
             var token = "Bearer valid.token.here";
-            
+
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["Authorization"] = token;
             _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
-            
+
             _jwtUtilsMock.Setup(x => x.GetClaim(token, "uid")).Returns(userId.ToString());
 
             var service = new GetUserService(_httpContextAccessorMock.Object, _jwtUtilsMock.Object, _logger);
@@ -160,7 +160,7 @@ namespace Tests.Services
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["Authorization"] = token;
             _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
-            
+
             _jwtUtilsMock.Setup(x => x.GetClaim(token, "uid")).Throws(new Exception("JWT parsing error"));
 
             var service = new GetUserService(_httpContextAccessorMock.Object, _jwtUtilsMock.Object, _logger);
@@ -178,11 +178,11 @@ namespace Tests.Services
             // Arrange
             var userId = TestFixture.CreateTestUserId();
             var token = "Bearer valid.token.here";
-            
+
             var httpContext = new DefaultHttpContext();
             httpContext.Request.Headers["Authorization"] = token;
             _httpContextAccessorMock.Setup(x => x.HttpContext).Returns(httpContext);
-            
+
             _jwtUtilsMock.Setup(x => x.GetClaim(token, "uid")).Returns(userId.ToString());
 
             var service = new GetUserService(_httpContextAccessorMock.Object, _jwtUtilsMock.Object, _logger);

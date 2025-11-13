@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,22 +57,22 @@ namespace Tests.Helpers
                 options.DefaultScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
             });
             var serviceProvider = serviceCollection.BuildServiceProvider();
-            
+
             var httpContext = new Microsoft.AspNetCore.Http.DefaultHttpContext
             {
                 RequestServices = serviceProvider
             };
             var httpContextAccessor = new Microsoft.AspNetCore.Http.HttpContextAccessor();
             httpContextAccessor.HttpContext = httpContext; // Set the HttpContext
-            
+
             var userOptions = Options.Create(new UserOptions());
-            
+
             // In .NET 8, UserClaimsPrincipalFactory constructor signature may vary
             // Using the parameterless constructor approach or DI-created factory
             var claimsFactory = new UserClaimsPrincipalFactory<IdentityUser>(
                 UserManager,
                 identityOptions);
-            
+
             var signInLogger = loggerFactory.CreateLogger<SignInManager<IdentityUser>>();
             var schemeProviderMock = new Moq.Mock<Microsoft.AspNetCore.Authentication.IAuthenticationSchemeProvider>();
             var userConfirmation = new DefaultUserConfirmation<IdentityUser>();

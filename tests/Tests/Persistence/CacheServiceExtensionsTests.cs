@@ -1,4 +1,4 @@
-using FluentAssertions;
+﻿using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Persistence.Caching.Contracts;
@@ -33,7 +33,7 @@ namespace Tests.Persistence
             _cacheServiceMock.Setup(c => c.GetAsync<List<string>>(cacheKey, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(cachedValue);
 
-            Func<Task<List<string>>> getItemCallback = async () => 
+            Func<Task<List<string>>> getItemCallback = async () =>
             {
                 await Task.Delay(1);
                 return new List<string> { "Item3" };
@@ -41,8 +41,8 @@ namespace Tests.Persistence
 
             // Act
             var result = await _cacheServiceMock.Object.GetOrSetAsync(
-                cacheKey, 
-                getItemCallback, 
+                cacheKey,
+                getItemCallback,
                 cancellationToken: CancellationToken.None,
                 logger: _logger);
 
@@ -63,24 +63,24 @@ namespace Tests.Persistence
             _cacheServiceMock.Setup(c => c.GetAsync<List<string>>(cacheKey, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((List<string>?)null); // Cache miss
 
-            Func<Task<List<string>>> getItemCallback = async () => 
+            Func<Task<List<string>>> getItemCallback = async () =>
             {
                 await Task.Delay(1);
                 return fetchedValue;
             };
 
             _cacheServiceMock.Setup(c => c.SetAsync(
-                cacheKey, 
-                fetchedValue, 
-                It.IsAny<TimeSpan?>(), 
-                null, 
+                cacheKey,
+                fetchedValue,
+                It.IsAny<TimeSpan?>(),
+                null,
                 It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
             // Act
             var result = await _cacheServiceMock.Object.GetOrSetAsync(
-                cacheKey, 
-                getItemCallback, 
+                cacheKey,
+                getItemCallback,
                 cancellationToken: CancellationToken.None,
                 logger: _logger);
 
@@ -89,10 +89,10 @@ namespace Tests.Persistence
             result.Should().BeEquivalentTo(fetchedValue);
             _cacheServiceMock.Verify(c => c.GetAsync<List<string>>(cacheKey, It.IsAny<CancellationToken>()), Times.Once);
             _cacheServiceMock.Verify(c => c.SetAsync(
-                cacheKey, 
-                fetchedValue, 
-                It.IsAny<TimeSpan?>(), 
-                null, 
+                cacheKey,
+                fetchedValue,
+                It.IsAny<TimeSpan?>(),
+                null,
                 It.IsAny<CancellationToken>()), Times.Once);
         }
 
@@ -106,7 +106,7 @@ namespace Tests.Persistence
             _cacheServiceMock.Setup(c => c.GetAsync<object>(cacheKey, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((object?)null);
 
-            Func<Task<object>> getItemCallback = async () => 
+            Func<Task<object>> getItemCallback = async () =>
             {
                 await Task.Delay(1);
                 throw notFoundException;
@@ -115,8 +115,8 @@ namespace Tests.Persistence
             // Act & Assert
             var exception = await Assert.ThrowsAsync<NotFoundException>(
                 async () => await _cacheServiceMock.Object.GetOrSetAsync(
-                    cacheKey, 
-                    getItemCallback, 
+                    cacheKey,
+                    getItemCallback,
                     cancellationToken: CancellationToken.None,
                     logger: _logger));
 
@@ -133,7 +133,7 @@ namespace Tests.Persistence
             _cacheServiceMock.Setup(c => c.GetAsync<object>(cacheKey, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((object?)null);
 
-            Func<Task<object>> getItemCallback = async () => 
+            Func<Task<object>> getItemCallback = async () =>
             {
                 await Task.Delay(1);
                 throw badRequestException;
@@ -142,8 +142,8 @@ namespace Tests.Persistence
             // Act & Assert
             var exception = await Assert.ThrowsAsync<BadRequestException>(
                 async () => await _cacheServiceMock.Object.GetOrSetAsync(
-                    cacheKey, 
-                    getItemCallback, 
+                    cacheKey,
+                    getItemCallback,
                     cancellationToken: CancellationToken.None,
                     logger: _logger));
 
@@ -160,7 +160,7 @@ namespace Tests.Persistence
             _cacheServiceMock.Setup(c => c.GetAsync<object>(cacheKey, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((object?)null);
 
-            Func<Task<object>> getItemCallback = async () => 
+            Func<Task<object>> getItemCallback = async () =>
             {
                 await Task.Delay(1);
                 throw genericException;
@@ -169,8 +169,8 @@ namespace Tests.Persistence
             // Act & Assert
             var exception = await Assert.ThrowsAsync<InternalServerError>(
                 async () => await _cacheServiceMock.Object.GetOrSetAsync(
-                    cacheKey, 
-                    getItemCallback, 
+                    cacheKey,
+                    getItemCallback,
                     cancellationToken: CancellationToken.None,
                     logger: _logger));
 
@@ -187,7 +187,7 @@ namespace Tests.Persistence
             _cacheServiceMock.Setup(c => c.GetAsync<List<string>>(cacheKey, It.IsAny<CancellationToken>()))
                 .ReturnsAsync((List<string>?)null);
 
-            Func<Task<List<string>?>> getItemCallback = async () => 
+            Func<Task<List<string>?>> getItemCallback = async () =>
             {
                 await Task.Delay(1);
                 return null; // Null result from callback
@@ -195,18 +195,18 @@ namespace Tests.Persistence
 
             // Act
             var result = await _cacheServiceMock.Object.GetOrSetAsync(
-                cacheKey, 
-                getItemCallback, 
+                cacheKey,
+                getItemCallback,
                 cancellationToken: CancellationToken.None,
                 logger: _logger);
 
             // Assert
             result.Should().BeNull();
             _cacheServiceMock.Verify(c => c.SetAsync(
-                It.IsAny<string>(), 
-                It.IsAny<object>(), 
-                It.IsAny<TimeSpan?>(), 
-                null, 
+                It.IsAny<string>(),
+                It.IsAny<object>(),
+                It.IsAny<TimeSpan?>(),
+                null,
                 It.IsAny<CancellationToken>()), Times.Never);
         }
     }

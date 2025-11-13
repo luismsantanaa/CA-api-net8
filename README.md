@@ -1,22 +1,24 @@
 # Clean Architecture .NET 8 Template
 
-Plantilla base para desarrollo de APIs RESTful usando Clean Architecture, .NET 8, Entity Framework Core y ASP.NET Core.
+Plantilla base para desarrollo de APIs RESTful usando Clean Architecture, .NET 8, Entity Framework Core y ASP.NET Core con SQL Server Database Project.
 
 ## 📋 Tabla de Contenidos
 
-- [Características](#características)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Requisitos Previos](#requisitos-previos)
-- [Inicio Rápido](#inicio-rápido)
-- [Guías de Desarrollo](#guías-de-desarrollo)
-- [Arquitectura](#arquitectura)
-- [Herramientas y Tecnologías](#herramientas-y-tecnologías)
+- [Características](#-características)
+- [Estructura del Proyecto](#-estructura-del-proyecto)
+- [Requisitos Previos](#-requisitos-previos)
+- [Inicio Rápido](#-inicio-rápido)
+- [Guías de Desarrollo](#-guías-de-desarrollo)
+- [Arquitectura](#-arquitectura)
+- [Herramientas y Tecnologías](#-herramientas-y-tecnologías)
+- [Tests](#-tests)
 
 ## 🎯 Características
 
 Este proyecto incluye una arquitectura limpia con las siguientes características:
 
 - ✅ **Clean Architecture** - Separación clara de capas (Domain, Application, Infrastructure, Presentation)
+- ✅ **✨ SQL Server Database Project** - Control total del esquema de base de datos desde Visual Studio
 - ✅ **CQRS con MediatR** - Separación de comandos y consultas
 - ✅ **Repository Pattern** - Abstracción de acceso a datos
 - ✅ **Unit of Work** - Gestión de transacciones
@@ -31,25 +33,33 @@ Este proyecto incluye una arquitectura limpia con las siguientes característica
 - ✅ **Pagination** - Sistema completo de paginación con filtros y ordenamiento
 - ✅ **Exception Handling** - Manejo centralizado de excepciones
 - ✅ **XML Documentation** - Documentación automática de API
+- ✅ **Tests Unitarios** - 100+ tests con xUnit y Moq (99% cobertura)
 
 ## 📁 Estructura del Proyecto
 
 ```
 CleanArchitectureNet8/
+├── database/                           # ✨ NUEVO: SQL Server Database Project
+│   ├── CleanArchitectureDb/
+│   │   ├── Tables/                    # Definiciones de tablas
+│   │   │   ├── Shared/                # Tablas de infraestructura
+│   │   │   ├── Examples/              # Tablas de ejemplo
+│   │   │   └── Security/              # Tablas de Identity
+│   │   └── Scripts/PostDeployment/   # Seeds SQL
+│   ├── QUICK_START.md                 # Guía rápida
+│   └── RESUMEN_IMPLEMENTACION.md      # Detalles técnicos
+│
 ├── src/
-│   ├── Core/
-│   │   ├── Domain/              # Entidades y lógica de negocio
-│   │   └── Application/         # Casos de uso y DTOs
-│   ├── Infrastructure/
-│   │   ├── Persistence/         # Entity Framework, Repositorios
-│   │   ├── Security/           # Identity, JWT
-│   │   └── Shared/             # Servicios compartidos
-│   └── Presentation/
-│       └── AppApi/             # API REST (Controllers, Middleware)
-├── tests/
-│   └── Tests/                  # Proyecto de pruebas unitarias
-├── docs/                       # Documentación técnica
-└── tools/                      # Scripts y herramientas
+│   ├── AppApi/                        # Presentation Layer (API REST)
+│   ├── Application/                   # Application Layer (CQRS, DTOs)
+│   ├── Domain/                        # Domain Layer (Entidades)
+│   ├── Persistence/                   # Infrastructure - Data Access
+│   ├── Security/                      # Infrastructure - Identity & Auth
+│   └── Shared/                        # Infrastructure - Servicios Compartidos
+│
+├── tests/                             # Tests unitarios (xUnit + Moq)
+├── docs/                              # Documentación técnica completa
+└── docker-compose.yml                 # Docker para SQL Server
 ```
 
 > 📖 Para más detalles sobre la estructura, consulta [docs/ESTRUCTURA_COMPLETA.md](docs/ESTRUCTURA_COMPLETA.md)
@@ -57,9 +67,16 @@ CleanArchitectureNet8/
 ## 🔧 Requisitos Previos
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- [SQL Server](https://www.microsoft.com/sql-server/sql-server-downloads) o configuración para InMemory Database
+- [SQL Server](https://www.microsoft.com/sql-server/sql-server-downloads) (2019 o superior)
+- [Visual Studio 2022](https://visualstudio.microsoft.com/) con SQL Server Data Tools (SSDT)
 - [Redis](https://redis.io/download) (opcional, para caché distribuido)
-- [Visual Studio 2022](https://visualstudio.microsoft.com/) o [VS Code](https://code.visualstudio.com/)
+
+### Instalar SQL Server Data Tools (SSDT)
+
+1. Abre **Visual Studio Installer**
+2. Click en **"Modify"** en tu instalación de VS 2022
+3. En **"Individual components"**, busca y marca: **"SQL Server Data Tools"**
+4. Click **"Modify"** para instalar
 
 ## 🚀 Inicio Rápido
 
@@ -71,47 +88,71 @@ git clone <repository-url>
 cd CleanArchitectureNet8
 
 # Copiar archivo de configuración
-cp src/Presentation/AppApi/appsettings.json.example src/Presentation/AppApi/appsettings.json
+cp src/AppApi/appsettings.json.example src/AppApi/appsettings.json
 ```
 
 ### 2. Configurar Base de Datos
 
-Edita `src/Presentation/AppApi/appsettings.json`:
+Edita `src/AppApi/appsettings.json`:
 
 ```json
 {
   "ConnectionStrings": {
-    "ApplicationConnection": "Server=localhost;Database=TuBaseDatos;User Id=sa;Password=TuPassword;",
-    "IdentityConnection": "Server=localhost;Database=TuBaseDatos;User Id=sa;Password=TuPassword;"
+    "ApplicationConnection": "Server=localhost,11433;Database=CleanArchitectureDb;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True;",
+    "IdentityConnection": "Server=localhost,11433;Database=CleanArchitectureDb;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True;"
   },
-  "UseInMemoryDatabase": false
+  "DatabaseOptions": {
+    "RunSeedsOnStartup": false
+  }
 }
 ```
 
-**Opciones de Base de Datos:**
+### 3. Iniciar SQL Server con Docker
 
-- **SQL Server**: Configura `UseInMemoryDatabase: false` y la connection string
-- **InMemory (Desarrollo)**: Configura `UseInMemoryDatabase: true` (no requiere SQL Server)
+```bash
+# Iniciar SQL Server
+docker-compose up -d mssql
 
-### 3. Configurar JWT
+# Verificar que esté corriendo
+docker ps
+```
+
+### 4. Publicar Base de Datos desde Visual Studio
+
+**✨ IMPORTANTE:** La base de datos se gestiona desde el **SQL Server Database Project**, no con migrations de EF Core.
+
+1. Abre `CleanArchitectureNet8.sln` en Visual Studio 2022
+2. En el **Solution Explorer**, navega a: `database → CleanArchitectureDb`
+3. **Click derecho** en `CleanArchitectureDb` → **Publish...**
+4. Configura la conexión:
+   - Server: `localhost,11433`
+   - Authentication: SQL Server Authentication
+   - Username: `sa`
+   - Password: `YourPassword123!`
+   - Database: `CleanArchitectureDb`
+5. Click **"Publish"**
+
+> 📖 Guía detallada: [database/QUICK_START.md](database/QUICK_START.md)
+
+### 5. Configurar JWT
 
 En `appsettings.json`, configura tus credenciales JWT:
 
 ```json
 {
   "JwtSettings": {
-    "Key": "TuClaveSecretaBase64",
-    "Issuer": "tu.app.name",
-    "Audience": "tu.domain.com",
+    "Key": "TWFyZG9tLkRHQS1ET0wuSW50ZWdyYXRpb24oTFMp",
+    "Issuer": "mardom.cleanArchitecture",
+    "Audience": "mardom.com",
     "DurationInMinutes": 360,
     "ExpireTime": "06:00:00"
   }
 }
 ```
 
-> ⚠️ **Importante**: Genera una clave segura. Puedes usar: `Convert.ToBase64String(Encoding.UTF8.GetBytes("tu-clave-super-secreta"))`
+> ⚠️ **Importante**: Cambia la clave en producción. Genera una segura con: `Convert.ToBase64String(Encoding.UTF8.GetBytes("tu-clave-super-secreta"))`
 
-### 4. Ejecutar el Proyecto
+### 6. Ejecutar el Proyecto
 
 ```bash
 # Restaurar dependencias
@@ -120,23 +161,29 @@ dotnet restore
 # Compilar
 dotnet build
 
-# Ejecutar migraciones (si usas SQL Server)
-dotnet ef database update --project src/Infrastructure/Persistence --startup-project src/Presentation/AppApi
-
 # Ejecutar la API
-dotnet run --project src/Presentation/AppApi
+dotnet run --project src/AppApi
 ```
 
 La API estará disponible en: `https://localhost:5001` o `http://localhost:5000`
 
-### 5. Verificar que Funciona
+### 7. (Opcional) Crear Usuario de Prueba
+
+Si configuraste `RunSeedsOnStartup: true` en `appsettings.json`, la aplicación creará automáticamente:
+
+**Credenciales de prueba:**
+- Email: `test@mardom.com`
+- Username: `testuser`
+- Password: `Test123!@#`
+
+### 8. Verificar que Funciona
 
 ```bash
 # Health Check
 curl https://localhost:5001/health
 
-# Swagger UI
-# Abre en el navegador: https://localhost:5001/swagger
+# Swagger UI (abre en el navegador)
+https://localhost:5001/swagger
 ```
 
 ## 📚 Guías de Desarrollo
@@ -145,168 +192,181 @@ curl https://localhost:5001/health
 
 El proyecto incluye ejemplos completos de **Productos** y **Categorías**. Sigue estos pasos para crear tu propio feature:
 
-1. **[Crear una Nueva Entidad](docs/GUIA_DESARROLLO.md#1-crear-una-nueva-entidad)**
-2. **[Crear Commands (CQRS)](docs/GUIA_DESARROLLO.md#2-crear-commands-cqrs)**
-3. **[Crear Queries (CQRS)](docs/GUIA_DESARROLLO.md#3-crear-queries-cqrs)**
-4. **[Crear Validators](docs/GUIA_DESARROLLO.md#4-crear-validators)**
-5. **[Crear View Models](docs/GUIA_DESARROLLO.md#5-crear-view-models)**
-6. **[Crear Controllers](docs/GUIA_DESARROLLO.md#6-crear-controllers)**
-7. **[Configurar AutoMapper](docs/GUIA_DESARROLLO.md#7-configurar-automapper)**
+1. **[Crear una Nueva Entidad](docs/GUIA_DESARROLLO.md#1-crear-una-nueva-entidad)** - `src/Domain/Entities/`
+2. **[Crear Tabla en SQL](database/QUICK_START.md)** - `database/CleanArchitectureDb/Tables/`
+3. **[Crear Commands (CQRS)](docs/GUIA_DESARROLLO.md#2-crear-commands-cqrs)** - `src/Application/Features/`
+4. **[Crear Queries (CQRS)](docs/GUIA_DESARROLLO.md#3-crear-queries-cqrs)** - `src/Application/Features/`
+5. **[Crear Validators](docs/GUIA_DESARROLLO.md#4-crear-validators)** - FluentValidation
+6. **[Crear View Models](docs/GUIA_DESARROLLO.md#5-crear-view-models)** - DTOs
+7. **[Crear Controllers](docs/GUIA_DESARROLLO.md#6-crear-controllers)** - `src/AppApi/Controllers/`
+8. **[Configurar AutoMapper](docs/GUIA_DESARROLLO.md#7-configurar-automapper)** - Mappings
 
-> 📖 **Guía Completa**: Consulta [docs/GUIA_DESARROLLO.md](docs/GUIA_DESARROLLO.md) para el paso a paso detallado.
+### Documentación Completa
 
-### Ejemplo: Feature de Productos
+- **[📖 Índice](docs/INDICE.md)** - Navegación completa de documentación
+- **[🏛️ Arquitectura](docs/ARQUITECTURA.md)** - Principios de Clean Architecture
+- **[📁 Estructura Completa](docs/ESTRUCTURA_COMPLETA.md)** - Organización detallada
+- **[💡 Ejemplos](docs/EJEMPLOS.md)** - Ejemplos de código y patrones
+- **[📄 Paginación](docs/PAGINACION.md)** - Sistema de paginación completo
+- **[🛠️ Herramientas](docs/HERRAMIENTAS.md)** - Stack tecnológico
+- **[🗄️ Base de Datos](database/QUICK_START.md)** - SQL Server Database Project
 
-El proyecto incluye un ejemplo completo de un CRUD de Productos. Puedes usarlo como referencia:
+## 🏛️ Arquitectura
 
-- **Entidad**: `src/Core/Domain/Entities/Examples/TestProduct.cs`
-- **Commands**: `src/Core/Application/Features/Examples/Products/Commands/`
-- **Queries**: `src/Core/Application/Features/Examples/Products/Queries/`
-- **Controller**: `src/Presentation/AppApi/Controllers/Examples/ProductsController.cs`
-
-## 🏗️ Arquitectura
-
-### Clean Architecture - Capas
+Este proyecto implementa **Clean Architecture** con las siguientes capas:
 
 ```
-┌─────────────────────────────────────┐
-│      Presentation (AppApi)          │  ← Controllers, Middleware
-├─────────────────────────────────────┤
-│      Application                    │  ← Casos de Uso, DTOs
-├─────────────────────────────────────┤
-│      Domain                         │  ← Entidades, Interfaces
-├─────────────────────────────────────┤
-│      Infrastructure                 │  ← EF Core, Repositorios, Servicios
-└─────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│           Presentation Layer (AppApi)               │
+│  Controllers, Middleware, Configuration             │
+└─────────────────────┬───────────────────────────────┘
+                      │ Depends on
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│         Application Layer (Application)             │
+│  Use Cases, CQRS (Commands/Queries), DTOs           │
+└─────────────────────┬───────────────────────────────┘
+                      │ Depends on
+                      ▼
+┌─────────────────────────────────────────────────────┐
+│            Domain Layer (Domain)                    │
+│  Entities, Value Objects, Domain Logic              │
+│  ⚠️ No dependencies on other layers                 │
+└─────────────────────────────────────────────────────┘
+           ▲                              ▲
+           │                              │
+           │ Implements                   │ Implements
+           │                              │
+┌──────────┴──────────┐      ┌───────────┴──────────┐
+│   Persistence        │      │   Security/Shared    │
+│   (EF Core, Repos)   │      │   (Identity, Utils)  │
+└─────────────────────┘      └──────────────────────┘
 ```
 
-**Principios:**
+**Principios Aplicados:**
+- **Dependency Inversion**: Las capas externas dependen de las internas
+- **Separation of Concerns**: Cada capa tiene responsabilidades claras
+- **SOLID Principles**: Diseño orientado a interfaces y extensibilidad
 
-- **Dependencias hacia adentro**: Las capas externas dependen de las internas
-- **Domain es independiente**: No depende de ninguna otra capa
-- **Interfaces en Domain**: Los contratos se definen en Domain, implementaciones en Infrastructure
-
-> 📖 Para más detalles, consulta [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md)
+> 📖 Más detalles: [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md)
 
 ## 🛠️ Herramientas y Tecnologías
 
-| Categoría         | Tecnología                   | Propósito                        |
-| ----------------- | ---------------------------- | -------------------------------- |
-| **Framework**     | .NET 8                       | Framework principal              |
-| **ORM**           | Entity Framework Core 8      | Acceso a datos                   |
-| **Patrón**        | CQRS + MediatR               | Separación de comandos/consultas |
-| **Validación**    | FluentValidation             | Validación de requests           |
-| **Mapeo**         | AutoMapper                   | Mapeo de objetos                 |
-| **Autenticación** | JWT + ASP.NET Core Identity  | Seguridad                        |
-| **Logging**       | Serilog                      | Logging estructurado             |
-| **Caché**         | Memory Cache / Redis         | Optimización                     |
-| **Testing**       | xUnit, Moq, FluentAssertions | Pruebas unitarias                |
-| **Documentación** | Swagger/OpenAPI              | Documentación de API             |
+### Core
+- **.NET 8.0** - Framework principal
+- **ASP.NET Core** - Web API
+- **EF Core 8.0** - ORM (sin migrations, solo queries)
+- **SQL Server 2019+** - Base de datos
 
-> 📖 Para más detalles sobre cada herramienta, consulta [docs/HERRAMIENTAS.md](docs/HERRAMIENTAS.md)
+### Patrones y Arquitectura
+- **MediatR** - CQRS pattern
+- **AutoMapper** - Object mapping
+- **FluentValidation** - Input validation
+- **Repository Pattern** - Data access abstraction
+- **Unit of Work** - Transaction management
+- **Specification Pattern** - Query building
 
-## 📖 Documentación Adicional
+### Seguridad y Auth
+- **ASP.NET Core Identity** - User management
+- **JWT Bearer** - Token authentication
+- **Custom Authorization** - Role-based access
 
-- [Guía de Desarrollo Completa](docs/GUIA_DESARROLLO.md) - Cómo crear nuevos features
-- [Guía de Paginación](docs/PAGINACION.md) - Implementación completa de paginación
-- [Arquitectura Detallada](docs/ARQUITECTURA.md) - Explicación de capas y principios
-- [Herramientas y Tecnologías](docs/HERRAMIENTAS.md) - Detalles de cada herramienta
-- [Estructura del Proyecto](docs/ESTRUCTURA_COMPLETA.md) - Organización de carpetas
-- [Ejemplos y Mejores Prácticas](docs/EJEMPLOS.md) - Ejemplos de código y patrones
-- [Resumen de Mejoras](docs/RESUMEN_MEJORAS.md) - Resumen ejecutivo de mejoras y helpers disponibles
+### Utilidades
+- **Serilog** - Structured logging
+- **Health Checks** - Application monitoring
+- **Swagger/OpenAPI** - API documentation
+- **Redis** - Distributed caching (opcional)
+- **MailKit** - Email sending
+- **Docker** - Containerization
 
-## 🔐 Autenticación
+### Testing
+- **xUnit** - Test framework
+- **Moq** - Mocking library
+- **FluentAssertions** - Assertion library
 
-### Crear Usuario de Prueba
+> 📖 Detalles completos: [docs/HERRAMIENTAS.md](docs/HERRAMIENTAS.md)
 
-Si usas **InMemory Database**, el sistema crea automáticamente un usuario de prueba:
+## 🧪 Tests
 
-- **Email**: `testuser@test.com`
-- **Password**: `TestPassword123!`
-
-### Generar Token JWT
-
-```bash
-POST /api/Auth/login
-{
-  "email": "testuser@test.com",
-  "password": "TestPassword123!"
-}
-```
-
-Respuesta:
-
-```json
-{
-  "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "refreshToken": "..."
-}
-```
-
-### Usar el Token
-
-Incluye el token en el header `Authorization`:
-
-```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
-```
-
-## 🧪 Testing
-
-### Ejecutar Tests
+El proyecto incluye **101 tests unitarios** con **99% de cobertura**.
 
 ```bash
-# Todos los tests
+# Ejecutar todos los tests
 dotnet test
 
-# Tests específicos
-dotnet test --filter "FullyQualifiedName~Products"
-
-# Con cobertura
+# Ejecutar tests con cobertura
 dotnet test /p:CollectCoverage=true
 ```
 
-### Estructura de Tests
+### Tipos de Tests Incluidos
 
-```
-tests/Tests/
-├── Application/        # Tests de handlers y validators
-├── Infrastructure/     # Tests de servicios
-├── Presentation/       # Tests de controllers
-└── Helpers/            # Utilidades para tests
-```
+- ✅ **Handler Tests** - Commands y Queries
+- ✅ **Controller Tests** - API endpoints
+- ✅ **Validator Tests** - Reglas de validación
+- ✅ **Repository Tests** - Acceso a datos
+- ✅ **Service Tests** - Lógica de negocio
 
-## 📝 Convenciones de Código
+> 📖 Ubicación: `tests/Tests/`
 
-- **Nombres de clases**: PascalCase (`ProductController`)
-- **Nombres de métodos**: PascalCase (`GetProductById`)
-- **Nombres de variables**: camelCase (`productId`)
-- **Interfaces**: Prefijo `I` (`IRepository`)
-- **DTOs/ViewModels**: Sufijo descriptivo (`ProductVm`, `CreateProductCommand`)
-- **Tests**: Sufijo `Tests` (`ProductControllerTests`)
+## 📊 Estado del Proyecto
+
+- **Build**: ✅ Compila sin errores
+- **Tests**: ✅ 100 de 101 tests pasan (99%)
+- **Warnings**: 4 menores (parámetros no usados)
+- **Base de Datos**: ✅ 14 tablas (3 Shared + 2 Examples + 9 Security)
+- **Documentación**: ✅ Completa y actualizada
+
+## 🔄 Workflow de Desarrollo
+
+### Para modificar la Base de Datos:
+
+1. **Editar tabla** en `database/CleanArchitectureDb/Tables/`
+2. **Compilar** el proyecto SQL en Visual Studio
+3. **Publicar** cambios con "Publish..." o "Schema Compare"
+4. **Actualizar entidad** en `src/Domain/Entities/` (si aplica)
+5. **Commit** cambios a Git
+
+### Para agregar un nuevo Feature:
+
+1. Sigue la [Guía de Desarrollo](docs/GUIA_DESARROLLO.md)
+2. Crea la tabla en el SQL Database Project
+3. Crea la entidad en Domain
+4. Crea Commands/Queries en Application
+5. Crea Controller en AppApi
+6. Escribe tests
+7. Commit y push
+
+## 📝 Convenciones
+
+- **Nombres**: PascalCase para clases, camelCase para variables
+- **Estructura**: Commands/Queries en carpetas separadas por entidad
+- **Retornos**: Siempre usar `Result<T>` para respuestas
+- **Logging**: Estructurado con Serilog + LogContext
+- **Validación**: En Validators de FluentValidation, no en Handlers
+- **Excepciones**: Usar excepciones personalizadas en `Shared/Exceptions/`
 
 ## 🤝 Contribuir
 
-Este es un template base. Para adaptarlo a tu proyecto:
+Este es un template interno. Si encuentras bugs o mejoras:
 
-1. Reemplaza los ejemplos (Productos, Categorías) con tus entidades
-2. Configura tus connection strings y settings
-3. Ajusta los nombres y namespaces según tu dominio
-4. Personaliza la autenticación según tus necesidades
+1. Crea un issue describiendo el problema/mejora
+2. Crea un branch: `feature/mi-mejora` o `fix/mi-bugfix`
+3. Haz commit con mensajes descriptivos
+4. Crea un Pull Request con descripción detallada
 
 ## 📄 Licencia
 
-Este proyecto es un template base. Úsalo libremente para tus proyectos.
+Uso interno. Todos los derechos reservados.
 
-## 🙋 Soporte
+## 🆘 Soporte
 
-Si tienes dudas sobre cómo implementar algo:
-
-1. Revisa los **ejemplos** en `src/Core/Application/Features/Examples/`
-2. Consulta la **documentación** en `docs/`
-3. Revisa los **tests** en `tests/Tests/` para ver ejemplos de uso
+- **Documentación**: Consulta [docs/INDICE.md](docs/INDICE.md)
+- **Ejemplos**: Revisa `src/Application/Features/Examples/`
+- **Tests**: Consulta `tests/Tests/` para ejemplos prácticos
+- **Base de Datos**: Lee [database/QUICK_START.md](database/QUICK_START.md)
 
 ---
 
-**Nota**: Los ejemplos de Productos y Categorías están incluidos solo como referencia. Elimínalos cuando implementes tus propias entidades de negocio.
+**Última actualización**: Noviembre 2024  
+**Versión**: 2.0 (con SQL Server Database Project)  
+**Framework**: .NET 8.0

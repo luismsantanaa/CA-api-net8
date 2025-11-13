@@ -594,3 +594,14 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,visualstudio,csharp
+
+### SQL Server Database Project ###
+# Archivos de publicación con conexiones y contraseñas
+*.publish.xml
+!*.publish.xml.example
+
+# Archivos temporales de SQL
+*.dbmdl
+*.jfm
+*.pfx
+*.publishsettings
