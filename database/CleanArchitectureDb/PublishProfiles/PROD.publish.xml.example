@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Publish Profile para ambiente de PRODUCCIÓN
+  
+  ⚠️ CUIDADO: Este profile es para PRODUCCIÓN
+  
+  INSTRUCCIONES:
+  1. Copiar este archivo y renombrarlo a PROD.publish.xml
+  2. Actualizar los valores de conexión según tu servidor PROD
+  3. Obtener aprobación antes de usar
+  4. NO commitear el archivo .publish.xml (está en .gitignore)
+-->
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Nombre de la base de datos destino -->
+    <TargetDatabaseName>CleanArchitectureDb</TargetDatabaseName>
+    
+    <!-- String de conexión - ACTUALIZAR CON TUS VALORES -->
+    <!-- PROD SIEMPRE debe usar Integrated Security o certificados -->
+    <TargetConnectionString>Data Source=sql-prod.company.com;Initial Catalog=CleanArchitectureDb;Integrated Security=True;Trust Server Certificate=False;Encrypt=True</TargetConnectionString>
+    
+    <!-- Versión del profile -->
+    <ProfileVersionNumber>1</ProfileVersionNumber>
+    
+    <!-- Opciones de deployment (MÁXIMA SEGURIDAD) -->
+    <BlockOnPossibleDataLoss>True</BlockOnPossibleDataLoss>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <ScriptDatabaseOptions>True</ScriptDatabaseOptions>
+    <GenerateSmartDefaults>True</GenerateSmartDefaults>
+    
+    <!-- SIEMPRE hacer backup antes de deployment en PROD -->
+    <BackupDatabaseBeforeChanges>True</BackupDatabaseBeforeChanges>
+    
+    <!-- NUNCA eliminar objetos automáticamente en PROD -->
+    <DropObjectsNotInSource>False</DropObjectsNotInSource>
+    
+    <!-- Protección de datos críticos -->
+    <DoNotDropUsers>True</DoNotDropUsers>
+    <DoNotDropLogins>True</DoNotDropLogins>
+    <DoNotDropObjectTypes>
+      <Name>Users</Name>
+      <Name>Logins</Name>
+      <Name>ServerRoleMembership</Name>
+      <Name>RoleMembership</Name>
+      <Name>DatabaseRoles</Name>
+    </DoNotDropObjectTypes>
+    
+    <!-- Opciones de transacción -->
+    <CommandTimeout>600</CommandTimeout>
+  </PropertyGroup>
+</Project>
+

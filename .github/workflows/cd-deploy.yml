@@ -1,0 +1,280 @@
+name: CD - Deploy to Environments
+
+# Triggers del workflow
+on:
+  workflow_dispatch: # Manual deployment trigger
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        type: choice
+        options:
+          - DEV
+          - QA
+          - PROD
+      change_request:
+        description: 'Change Request Number (required for PROD)'
+        required: false
+        type: string
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  CONFIGURATION: Release
+
+jobs:
+  # ===================================
+  # Job 1: Build Application
+  # ===================================
+  build-application:
+    name: Build Application
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: 📦 Restore dependencies
+      run: dotnet restore
+
+    - name: 🔨 Build
+      run: dotnet build --configuration ${{ env.CONFIGURATION }} --no-restore
+
+    - name: 🧪 Run tests
+      run: dotnet test --configuration ${{ env.CONFIGURATION }} --no-build --verbosity normal
+
+    - name: 📦 Publish application
+      run: dotnet publish src/AppApi/AppApi.csproj --configuration ${{ env.CONFIGURATION }} --output ./publish --no-build
+
+    - name: 📤 Upload application artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: application-${{ inputs.environment }}
+        path: ./publish
+        retention-days: 7
+
+  # ===================================
+  # Job 2: Build Database
+  # ===================================
+  build-database:
+    name: Build Database Project
+    runs-on: windows-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+
+    - name: 🔧 Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: 🔨 Build SQL Project
+      run: msbuild database/CleanArchitectureDb/CleanArchitectureDb.sqlproj /p:Configuration=Release /v:minimal
+
+    - name: 📤 Upload .dacpac
+      uses: actions/upload-artifact@v4
+      with:
+        name: database-dacpac-${{ inputs.environment }}
+        path: database/CleanArchitectureDb/bin/Release/*.dacpac
+        retention-days: 7
+
+  # ===================================
+  # Job 3: Deploy to DEV
+  # ===================================
+  deploy-dev:
+    name: Deploy to DEV
+    runs-on: ubuntu-latest
+    needs: [build-application, build-database]
+    if: inputs.environment == 'DEV'
+    environment:
+      name: development
+      url: https://dev-api.company.com
+    
+    steps:
+    - name: 📥 Download application artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: application-${{ inputs.environment }}
+        path: ./publish
+
+    - name: 🚀 Deploy Application to DEV
+      run: |
+        echo "Deploying application to DEV environment"
+        # TODO: Agregar comandos específicos de deployment (Azure, AWS, Docker, etc.)
+        # Ejemplo para Azure Web App:
+        # az webapp deployment source config-zip --resource-group rg-dev --name webapp-dev --src publish.zip
+        
+    - name: 📥 Download database artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: database-dacpac-${{ inputs.environment }}
+        path: ./database
+
+    - name: 🗄️ Deploy Database to DEV
+      run: |
+        echo "Deploying database to DEV environment"
+        # TODO: Ejecutar deployment del .dacpac
+        # sqlpackage /Action:Publish /SourceFile:database/CleanArchitectureDb.dacpac /TargetConnectionString:"..."
+
+    - name: ✅ Deployment Summary
+      run: |
+        echo "## Deployment to DEV Completed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- Environment: DEV" >> $GITHUB_STEP_SUMMARY
+        echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Deployed by: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Timestamp: $(date)" >> $GITHUB_STEP_SUMMARY
+
+  # ===================================
+  # Job 4: Deploy to QA
+  # ===================================
+  deploy-qa:
+    name: Deploy to QA
+    runs-on: ubuntu-latest
+    needs: [build-application, build-database]
+    if: inputs.environment == 'QA'
+    environment:
+      name: qa
+      url: https://qa-api.company.com
+    
+    steps:
+    - name: 📥 Checkout deployment scripts
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          database/deploy-qa.ps1
+        sparse-checkout-cone-mode: false
+
+    - name: 📥 Download application artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: application-${{ inputs.environment }}
+        path: ./publish
+
+    - name: 🚀 Deploy Application to QA
+      run: |
+        echo "Deploying application to QA environment"
+        # TODO: Agregar comandos específicos de deployment
+
+    - name: 📥 Download database artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: database-dacpac-${{ inputs.environment }}
+        path: ./database
+
+    - name: 🗄️ Deploy Database to QA
+      run: |
+        echo "Deploying database to QA environment"
+        # TODO: Ejecutar deployment del .dacpac con validaciones
+
+    - name: 🧪 Run smoke tests
+      run: |
+        echo "Running smoke tests on QA"
+        # TODO: Ejecutar smoke tests
+
+    - name: ✅ Deployment Summary
+      run: |
+        echo "## Deployment to QA Completed" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- Environment: QA" >> $GITHUB_STEP_SUMMARY
+        echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Deployed by: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Timestamp: $(date)" >> $GITHUB_STEP_SUMMARY
+
+  # ===================================
+  # Job 5: Deploy to PROD
+  # ===================================
+  deploy-prod:
+    name: Deploy to PRODUCTION
+    runs-on: ubuntu-latest
+    needs: [build-application, build-database]
+    if: inputs.environment == 'PROD'
+    environment:
+      name: production
+      url: https://api.company.com
+    
+    steps:
+    - name: ⚠️ Validate Change Request
+      run: |
+        if [ -z "${{ inputs.change_request }}" ]; then
+          echo "❌ Change Request Number is required for PROD deployment"
+          exit 1
+        fi
+        echo "✅ Change Request: ${{ inputs.change_request }}"
+
+    - name: 📥 Checkout deployment scripts
+      uses: actions/checkout@v4
+      with:
+        sparse-checkout: |
+          database/deploy-prod.ps1
+        sparse-checkout-cone-mode: false
+
+    - name: 📥 Download application artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: application-${{ inputs.environment }}
+        path: ./publish
+
+    - name: 🔍 Pre-deployment checks
+      run: |
+        echo "Running pre-deployment validation..."
+        # TODO: Verificar que QA deployment fue exitoso
+        # TODO: Verificar que backup de PROD existe
+        # TODO: Verificar maintenance window
+
+    - name: 🚀 Deploy Application to PRODUCTION
+      run: |
+        echo "Deploying application to PRODUCTION environment"
+        echo "Change Request: ${{ inputs.change_request }}"
+        # TODO: Agregar comandos específicos de deployment con validaciones adicionales
+
+    - name: 📥 Download database artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: database-dacpac-${{ inputs.environment }}
+        path: ./database
+
+    - name: 🗄️ Deploy Database to PRODUCTION
+      run: |
+        echo "Deploying database to PRODUCTION environment"
+        # TODO: Ejecutar deployment del .dacpac con MÁXIMAS validaciones
+
+    - name: 🧪 Run smoke tests
+      run: |
+        echo "Running smoke tests on PRODUCTION"
+        # TODO: Ejecutar smoke tests críticos
+
+    - name: 📊 Post-deployment verification
+      run: |
+        echo "Verifying PRODUCTION deployment..."
+        # TODO: Verificar health checks
+        # TODO: Verificar logs
+        # TODO: Verificar métricas
+
+    - name: ✅ Deployment Summary
+      run: |
+        echo "## ✅ PRODUCTION DEPLOYMENT COMPLETED" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Deployment Information:" >> $GITHUB_STEP_SUMMARY
+        echo "- Environment: PRODUCTION" >> $GITHUB_STEP_SUMMARY
+        echo "- Change Request: ${{ inputs.change_request }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Deployed by: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Timestamp: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Post-Deployment Checklist:" >> $GITHUB_STEP_SUMMARY
+        echo "- [ ] Monitor application logs" >> $GITHUB_STEP_SUMMARY
+        echo "- [ ] Verify health check endpoints" >> $GITHUB_STEP_SUMMARY
+        echo "- [ ] Check performance metrics" >> $GITHUB_STEP_SUMMARY
+        echo "- [ ] Update Change Request status" >> $GITHUB_STEP_SUMMARY
+        echo "- [ ] Notify stakeholders" >> $GITHUB_STEP_SUMMARY
+
+    - name: 📧 Send notification
+      if: success()
+      run: |
+        echo "Sending deployment notification..."
+        # TODO: Enviar notificación a Slack, Teams, Email, etc.
+

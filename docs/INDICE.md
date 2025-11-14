@@ -5,31 +5,28 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
 ## 🚀 Para Empezar
 
 - **[README.md](../README.md)** - Inicio rápido, características principales, configuración básica
+- **[ROADMAP.md](../ROADMAP.md)** - Funcionalidades pendientes y mejoras futuras
 - **[ESTRUCTURA_COMPLETA.md](ESTRUCTURA_COMPLETA.md)** - Organización de carpetas y estructura del proyecto
-- **[database/QUICK_START.md](../database/QUICK_START.md)** - ✨ Guía rápida del SQL Server Database Project
-- **[database/RESUMEN_IMPLEMENTACION.md](../database/RESUMEN_IMPLEMENTACION.md)** - ✨ Detalles técnicos de la base de datos
+- **[database/QUICK_START.md](../database/QUICK_START.md)** - Guía rápida del SQL Server Database Project
+- **[database/RESUMEN_IMPLEMENTACION.md](../database/RESUMEN_IMPLEMENTACION.md)** - Detalles técnicos de la base de datos
+- **[database/DEPLOYMENT_GUIDE.md](../database/DEPLOYMENT_GUIDE.md)** - Guía completa de deployment (DEV, QA, PROD)
 
 ## 📚 Guías de Desarrollo
 
 - **[GUIA_DESARROLLO.md](GUIA_DESARROLLO.md)** - Guía paso a paso para crear un nuevo feature (CRUD completo)
   - Crear entidades
+  - Crear tablas en SQL Database Project
   - Crear Commands y Queries (CQRS)
   - Crear Validators
   - Crear View Models
   - Crear Controllers
   - Configurar AutoMapper
   - Implementar Paginación
-  - Helpers y servicios disponibles
 - **[PAGINACION.md](PAGINACION.md)** - Guía completa de paginación
   - Componentes de paginación
   - Implementación paso a paso
   - Ejemplos completos
   - Mejores prácticas
-- **[RESUMEN_MEJORAS.md](RESUMEN_MEJORAS.md)** - Resumen ejecutivo de mejoras
-  - Handler Base para Paginación
-  - Servicio de Invalidación de Caché
-  - Helpers para Result<T>
-  - Extensiones para Handlers
 
 ## 🏗️ Arquitectura y Diseño
 
@@ -47,6 +44,18 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
   - Acceso a datos (EF Core, Repository Pattern)
   - Validación (FluentValidation)
   - Mapeo (AutoMapper)
+- **[CI_CD_GUIDE.md](CI_CD_GUIDE.md)** - Guía completa de CI/CD
+  - GitHub Actions workflows
+  - Azure DevOps pipelines
+  - Configuración de entornos
+  - Secretos y variables
+  - Best practices
+- **[HEALTH_CHECKS.md](HEALTH_CHECKS.md)** - Sistema de Health Checks avanzados
+  - Endpoints disponibles (/health, /health/ready, /health/live)
+  - Health checks implementados (SQL, SMTP, Redis, Application)
+  - Dashboard visual (/health-ui)
+  - Configuración y monitoreo
+  - Troubleshooting
   - Autenticación (JWT, Identity)
   - Logging (Serilog)
   - Caching (Memory, Redis)
@@ -77,7 +86,7 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
 3. Consulta [EJEMPLOS.md](EJEMPLOS.md) cuando tengas dudas sobre cómo hacer algo
 
 **Referencias:**
-- Ejemplos completos en: `src/Core/Application/Features/Examples/Products/`
+- Ejemplos completos en: `src/Application/Features/Examples/Products/`
 - Tests de ejemplo en: `tests/Tests/Application/Handlers/`
 
 ### 👨‍💻 Para Programadores Intermedios
@@ -108,10 +117,10 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
 
 ### ¿Qué helpers y servicios están disponibles?
 
-- **Helpers para Result<T>**: [RESUMEN_MEJORAS.md#3-helpers-para-resultt](RESUMEN_MEJORAS.md#3-helpers-para-resultt)
-- **Servicio de Invalidación de Caché**: [RESUMEN_MEJORAS.md#2-servicio-de-invalidación-de-caché](RESUMEN_MEJORAS.md#2-servicio-de-invalidación-de-caché)
-- **Handler Base para Paginación**: [RESUMEN_MEJORAS.md#1-handler-base-para-paginación](RESUMEN_MEJORAS.md#1-handler-base-para-paginación)
-- **Extensiones para Handlers**: [RESUMEN_MEJORAS.md#4-extensiones-para-handlers](RESUMEN_MEJORAS.md#4-extensiones-para-handlers)
+- **Helpers para Result<T>**: `src/Application/DTOs/ResultExtensions.cs`
+- **Servicio de Invalidación de Caché**: `src/Persistence/Caching/CacheInvalidationService.cs`
+- **Handler Base para Paginación**: `src/Application/Handlers/Base/PaginatedQueryHandler.cs`
+- **Extensiones para Handlers**: `src/Application/Helpers/HandlerExtensions.cs`
 
 ### ¿Cómo funciona...?
 
@@ -150,5 +159,5 @@ Bienvenido a la documentación técnica del proyecto Clean Architecture .NET 8. 
 
 ---
 
-**Nota**: Los ejemplos de Productos y Categorías están incluidos solo como referencia. Elimínalos cuando implementes tus propias entidades de negocio.
+**Nota**: Los ejemplos de Productos y Categorías sirven como referencia completa de implementación CRUD. Puedes usarlos como base para crear tus propias entidades o adaptarlos según tus necesidades.
 

@@ -6,7 +6,7 @@
     <Name>CleanArchitectureDb</Name>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectVersion>4.1</ProjectVersion>
-    <ProjectGuid>{A1234567-89AB-CDEF-0123-456789ABCDEF}</ProjectGuid>
+    <ProjectGuid>{a1234567-89ab-cdef-0123-456789abcdef}</ProjectGuid>
     <DSP>Microsoft.Data.Tools.Schema.Sql.Sql160DatabaseSchemaProvider</DSP>
     <OutputType>Database</OutputType>
     <RootPath>
@@ -57,6 +57,7 @@
   <Import Condition="'$(SQLDBExtensionsRefPath)' == ''" Project="$(MSBuildExtensionsPath)\Microsoft\VisualStudio\v$(VisualStudioVersion)\SSDT\Microsoft.Data.Tools.Schema.SqlTasks.targets" />
   <ItemGroup>
     <Folder Include="Properties" />
+    <Folder Include="Schemas\" />
     <Folder Include="Tables\" />
     <Folder Include="Tables\Shared\" />
     <Folder Include="Tables\Examples\" />
@@ -65,6 +66,9 @@
     <Folder Include="Scripts\PostDeployment\" />
   </ItemGroup>
   <ItemGroup>
+    <Build Include="Schemas\Shared.sql" />
+    <Build Include="Schemas\Example.sql" />
+    <Build Include="Schemas\Security.sql" />
     <Build Include="Tables\Shared\AuditLogs.sql" />
     <Build Include="Tables\Shared\MailNotificationTemplate.sql" />
     <Build Include="Tables\Shared\UploadedFile.sql" />

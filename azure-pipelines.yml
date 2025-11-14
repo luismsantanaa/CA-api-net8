@@ -1,0 +1,274 @@
+# Azure DevOps Pipeline - Clean Architecture .NET 8
+# Configuración de CI/CD para Azure DevOps
+
+trigger:
+  branches:
+    include:
+    - main
+    - develop
+  paths:
+    exclude:
+    - docs/**
+    - README.md
+    - '**/*.md'
+
+pr:
+  branches:
+    include:
+    - main
+    - develop
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '8.0.x'
+  vmImageName: 'ubuntu-latest'
+  vmImageNameWindows: 'windows-latest'
+
+stages:
+# ===================================
+# Stage 1: Build and Test
+# ===================================
+- stage: Build
+  displayName: 'Build and Test'
+  jobs:
+  
+  # Build .NET Application
+  - job: BuildApplication
+    displayName: 'Build .NET Application'
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    
+    - task: UseDotNet@2
+      displayName: 'Install .NET SDK'
+      inputs:
+        version: $(dotnetVersion)
+        packageType: 'sdk'
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore NuGet packages'
+      inputs:
+        command: 'restore'
+        projects: '**/*.csproj'
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Build solution'
+      inputs:
+        command: 'build'
+        projects: '**/*.csproj'
+        arguments: '--configuration $(buildConfiguration) --no-restore'
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Run unit tests'
+      inputs:
+        command: 'test'
+        projects: '**/Tests.csproj'
+        arguments: '--configuration $(buildConfiguration) --no-build --collect:"XPlat Code Coverage"'
+        publishTestResults: true
+    
+    - task: PublishCodeCoverageResults@2
+      displayName: 'Publish code coverage'
+      inputs:
+        codeCoverageTool: 'Cobertura'
+        summaryFileLocation: '$(Agent.TempDirectory)/**/*.xml'
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish application'
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: 'src/AppApi/AppApi.csproj'
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/app --no-build'
+        zipAfterPublish: true
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish application artifact'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/app'
+        ArtifactName: 'application'
+        publishLocation: 'Container'
+
+  # Build SQL Database Project
+  - job: BuildDatabase
+    displayName: 'Build SQL Database Project'
+    pool:
+      vmImage: $(vmImageNameWindows) # SSDT requiere Windows
+    steps:
+    
+    - task: MSBuild@1
+      displayName: 'Build SQL Database Project'
+      inputs:
+        solution: 'database/CleanArchitectureDb/CleanArchitectureDb.sqlproj'
+        configuration: $(buildConfiguration)
+        msbuildArguments: '/p:OutDir=$(Build.ArtifactStagingDirectory)/database/'
+    
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish database artifact'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)/database'
+        ArtifactName: 'database'
+        publishLocation: 'Container'
+
+  # Code Quality Analysis
+  - job: CodeQuality
+    displayName: 'Code Quality Analysis'
+    dependsOn: BuildApplication
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    
+    - task: UseDotNet@2
+      displayName: 'Install .NET SDK'
+      inputs:
+        version: $(dotnetVersion)
+    
+    - task: DotNetCoreCLI@2
+      displayName: 'Run code analysis'
+      inputs:
+        command: 'build'
+        projects: '**/*.csproj'
+        arguments: '--configuration $(buildConfiguration) /p:EnforceCodeStyleInBuild=true'
+
+# ===================================
+# Stage 2: Deploy to DEV
+# ===================================
+- stage: DeployDEV
+  displayName: 'Deploy to DEV'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
+  jobs:
+  
+  - deployment: DeployDEV
+    displayName: 'Deploy to DEV Environment'
+    environment: 'development'
+    pool:
+      vmImage: $(vmImageName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download application artifact'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'application'
+              downloadPath: '$(System.ArtifactsDirectory)'
+          
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download database artifact'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'database'
+              downloadPath: '$(System.ArtifactsDirectory)'
+          
+          # TODO: Agregar tasks específicos de deployment
+          # Ejemplo para Azure Web App:
+          # - task: AzureWebApp@1
+          #   inputs:
+          #     azureSubscription: 'Azure-Subscription'
+          #     appName: 'webapp-dev'
+          #     package: '$(System.ArtifactsDirectory)/application/**/*.zip'
+          
+          # Ejemplo para SQL Database:
+          # - task: SqlAzureDacpacDeployment@1
+          #   inputs:
+          #     azureSubscription: 'Azure-Subscription'
+          #     ServerName: 'sql-dev.database.windows.net'
+          #     DatabaseName: 'CleanArchitectureDb_DEV'
+          #     DacpacFile: '$(System.ArtifactsDirectory)/database/**/*.dacpac'
+
+# ===================================
+# Stage 3: Deploy to QA
+# ===================================
+- stage: DeployQA
+  displayName: 'Deploy to QA'
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  
+  - deployment: DeployQA
+    displayName: 'Deploy to QA Environment'
+    environment: 'qa'
+    pool:
+      vmImage: $(vmImageName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download application artifact'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'application'
+              downloadPath: '$(System.ArtifactsDirectory)'
+          
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download database artifact'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'database'
+              downloadPath: '$(System.ArtifactsDirectory)'
+          
+          # TODO: Agregar tasks específicos de deployment para QA
+          
+          # Smoke tests
+          - script: |
+              echo "Running smoke tests on QA"
+              # TODO: Ejecutar smoke tests
+            displayName: 'Run smoke tests'
+
+# ===================================
+# Stage 4: Deploy to PROD
+# ===================================
+- stage: DeployPROD
+  displayName: 'Deploy to PRODUCTION'
+  dependsOn: DeployQA
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  
+  - deployment: DeployPROD
+    displayName: 'Deploy to PRODUCTION Environment'
+    environment: 'production'
+    pool:
+      vmImage: $(vmImageName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download application artifact'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'application'
+              downloadPath: '$(System.ArtifactsDirectory)'
+          
+          - task: DownloadBuildArtifacts@0
+            displayName: 'Download database artifact'
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'database'
+              downloadPath: '$(System.ArtifactsDirectory)'
+          
+          # TODO: Agregar tasks específicos de deployment para PROD
+          
+          # Post-deployment verification
+          - script: |
+              echo "Verifying PRODUCTION deployment"
+              # TODO: Verificar health checks, logs, metrics
+            displayName: 'Post-deployment verification'
+          
+          # Send notification
+          - script: |
+              echo "Sending deployment notification"
+              # TODO: Enviar notificación
+            displayName: 'Send notification'
+

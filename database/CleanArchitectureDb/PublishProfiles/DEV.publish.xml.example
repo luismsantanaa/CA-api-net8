@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Publish Profile para ambiente de DESARROLLO (DEV)
+  
+  INSTRUCCIONES:
+  1. Copiar este archivo y renombrarlo a DEV.publish.xml
+  2. Actualizar los valores de conexión según tu ambiente local
+  3. NO commitear el archivo .publish.xml (está en .gitignore)
+-->
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Nombre de la base de datos destino -->
+    <TargetDatabaseName>CleanArchitectureDb_DEV</TargetDatabaseName>
+    
+    <!-- String de conexión - ACTUALIZAR CON TUS VALORES -->
+    <TargetConnectionString>Data Source=localhost,11433;Initial Catalog=CleanArchitectureDb_DEV;User ID=sa;Password=YourPassword123!;Trust Server Certificate=True;Encrypt=True</TargetConnectionString>
+    
+    <!-- Versión del profile -->
+    <ProfileVersionNumber>1</ProfileVersionNumber>
+    
+    <!-- Opciones de deployment -->
+    <BlockOnPossibleDataLoss>False</BlockOnPossibleDataLoss>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <ScriptDatabaseOptions>True</ScriptDatabaseOptions>
+    <GenerateSmartDefaults>True</GenerateSmartDefaults>
+    
+    <!-- Opciones adicionales para DEV -->
+    <BackupDatabaseBeforeChanges>False</BackupDatabaseBeforeChanges>
+    <AllowDropBlockingAssemblies>True</AllowDropBlockingAssemblies>
+    <DropObjectsNotInSource>True</DropObjectsNotInSource>
+  </PropertyGroup>
+</Project>
+

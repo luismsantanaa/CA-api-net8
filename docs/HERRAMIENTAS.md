@@ -133,14 +133,12 @@ public DbSet<Product> Products { get; set; }
 var products = await _context.Products.ToListAsync();
 ```
 
-**Migraciones**:
-```bash
-# Crear migración
-dotnet ef migrations add NombreMigracion --project src/Infrastructure/Persistence --startup-project src/Presentation/AppApi
+**Gestión de Schema**:
+El schema de base de datos se gestiona mediante el **SQL Server Database Project**:
 
-# Aplicar migración
-dotnet ef database update --project src/Infrastructure/Persistence --startup-project src/Presentation/AppApi
-```
+- Definir tablas en: `database/CleanArchitectureDb/Tables/`
+- Publicar desde Visual Studio: Clic derecho en `.sqlproj` → `Publish...`
+- Ver documentación completa: `database/QUICK_START.md`
 
 ---
 

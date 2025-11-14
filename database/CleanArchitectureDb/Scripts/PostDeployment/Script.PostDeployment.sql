@@ -10,24 +10,8 @@ Post-Deployment Script Template
 --------------------------------------------------------------------------------------
 */
 
--- Crear esquemas si no existen
-IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Shared')
-BEGIN
-    EXEC('CREATE SCHEMA [Shared]')
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Example')
-BEGIN
-    EXEC('CREATE SCHEMA [Example]')
-END
-GO
-
-IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = 'Security')
-BEGIN
-    EXEC('CREATE SCHEMA [Security]')
-END
-GO
+-- Los schemas (Shared, Example, Security) se crean como parte del proyecto SQL
+-- No es necesario crearlos aquí
 
 -- Ejecutar scripts de seed
 :r .\SeedSharedData.sql

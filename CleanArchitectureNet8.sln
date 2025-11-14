@@ -14,11 +14,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{C4AC070B-A23E-4C95-AEC8-192C31B68E83}"
 	ProjectSection(SolutionItems) = preProject
 		docs\ARQUITECTURA.md = docs\ARQUITECTURA.md
+		docs\CI_CD_GUIDE.md = docs\CI_CD_GUIDE.md
 		docs\Docker-Commands.txt = docs\Docker-Commands.txt
 		docs\DOCKER-SETUP.md = docs\DOCKER-SETUP.md
 		docs\EJEMPLOS.md = docs\EJEMPLOS.md
 		docs\ESTRUCTURA_COMPLETA.md = docs\ESTRUCTURA_COMPLETA.md
 		docs\GUIA_DESARROLLO.md = docs\GUIA_DESARROLLO.md
+		docs\HEALTH_CHECKS.md = docs\HEALTH_CHECKS.md
 		docs\HERRAMIENTAS.md = docs\HERRAMIENTAS.md
 		docs\INDICE.md = docs\INDICE.md
 		docs\PAGINACION.md = docs\PAGINACION.md

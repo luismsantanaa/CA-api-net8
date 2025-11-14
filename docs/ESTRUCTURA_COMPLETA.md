@@ -62,8 +62,8 @@ database/
 - ✅ Control total del esquema de base de datos
 - ✅ Validación en tiempo de diseño
 - ✅ Schema Compare automático
-- ✅ Sin bug de EF Core 9 migrations
 - ✅ Scripts idempotentes con MERGE
+- ✅ Separación clara entre código y schema
 
 ## 📦 src/ - Código Fuente
 
@@ -271,16 +271,17 @@ Persistence/
 ├── InternalModels/             # Modelos internos
 │   └── AuditEntry.cs
 │
-├── Migrations/                 # ❌ ELIMINADO - Ahora en SQL Project
 ├── PersistenceServicesRegistration.cs # DI de Persistence
 └── Persistence.csproj
 ```
 
-**Cambios Importantes:**
+**Características:**
 
-- ❌ **Sin Migrations**: Base de datos se maneja desde proyecto SQL
-- ❌ **Sin Seeds**: Datos iniciales en scripts SQL PostDeployment
-- ✅ **Solo Queries**: EF Core solo para leer/escribir, esquema en SQL
+- ✅ **Repositories**: Implementación del patrón Repository
+- ✅ **Unit of Work**: Gestión de transacciones
+- ✅ **Specifications**: Queries reutilizables
+- ✅ **Caching**: Invalidación inteligente de caché
+- 📝 **Schema**: Gestionado en SQL Server Database Project
 
 ### 🔐 src/Security/ - Identity & Authentication
 
@@ -324,15 +325,14 @@ Security/
 │   └── UserTokenRepository.cs
 │
 ├── Seeds/                      # Seeds de Identity
-│   └── IdentitySeedData.cs    # ✅ Usuario de prueba
+│   └── IdentitySeedData.cs    # Usuario de prueba
 │
-├── Migrations/                 # ❌ ELIMINADO - Ahora en SQL Project
 ├── IdentityServiceRegistration.cs # DI de Identity
 ├── SecurityServicesRegistration.cs # DI de Security
 └── Security.csproj
 ```
 
-**Nota:** Solo el seed de usuario de prueba se mantiene en C# (`IdentitySeedData.cs`) porque requiere hashing de contraseñas de Identity.
+**Nota:** El seed de usuario de prueba está en C# (`IdentitySeedData.cs`) porque requiere hashing de contraseñas mediante ASP.NET Core Identity. El resto de la estructura de base de datos está en el SQL Database Project.
 
 ### 🔧 src/Shared/ - Servicios Compartidos
 

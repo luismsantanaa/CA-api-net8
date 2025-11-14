@@ -91,8 +91,8 @@ public class CreateProductCommandHandler : IRequestHandler<CreateProductCommand,
 - ✅ **DbContexts**: `ApplicationDbContext` (Entity Framework)
 - ✅ **Repositories**: Implementaciones del patrón Repository
 - ✅ **Unit of Work**: Gestión de transacciones
-- ✅ **Migrations**: Migraciones de base de datos
 - ✅ **Caching**: Servicios de caché (local y distribuido)
+- ✅ **Schema**: Definido en SQL Server Database Project
 
 #### 3.2 Security (`Infrastructure/Security/`)
 - ✅ **Identity**: Configuración de ASP.NET Core Identity
@@ -290,29 +290,29 @@ public class ProductPaginationSpecification : BaseSpecification<Product>
 
 ### Entity Framework Core
 
-El proyecto usa **EF Core** con Code First approach:
+El proyecto usa **EF Core** para consultas y operaciones de datos:
 
 1. **Entidades** definidas en `Domain`
-2. **Configuraciones** en `Infrastructure/Persistence/EntitiesConfigurations/`
-3. **DbContext** en `Infrastructure/Persistence/DbContexts/`
-4. **Migrations** generadas con `dotnet ef migrations add`
+2. **Configuraciones** en `Persistence/EntitiesConfigurations/`
+3. **DbContext** en `Persistence/DbContexts/`
+4. **Schema** definido en `database/CleanArchitectureDb/` (SQL Server Database Project)
 
-### Opciones de Base de Datos
+### Gestión de Base de Datos
 
-#### SQL Server (Producción)
+El esquema de base de datos se gestiona mediante un **SQL Server Database Project** (.sqlproj):
+
+- **Tablas**: Definidas en SQL en `database/CleanArchitectureDb/Tables/`
+- **Seeds**: Scripts SQL en `database/CleanArchitectureDb/Scripts/PostDeployment/`
+- **Deployment**: Desde Visual Studio con "Publish..." o "Schema Compare"
+- **Control de versiones**: Todo el schema está en Git
+
+**Configuración**:
 ```json
 {
-  "UseInMemoryDatabase": false,
   "ConnectionStrings": {
-    "ApplicationConnection": "Server=...;Database=..."
+    "ApplicationConnection": "Server=localhost,11433;Database=CleanArchitectureDb;...",
+    "IdentityConnection": "Server=localhost,11433;Database=CleanArchitectureDb;..."
   }
-}
-```
-
-#### InMemory (Desarrollo/Testing)
-```json
-{
-  "UseInMemoryDatabase": true
 }
 ```
 

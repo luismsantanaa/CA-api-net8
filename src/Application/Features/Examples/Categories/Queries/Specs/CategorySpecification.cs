@@ -7,6 +7,7 @@ namespace Application.Features.Examples.Categories.Queries.Specs
     internal class CategorySpecificationParams : SpecificationParams
     {
         public string? Id { get; set; }
+        public string? Description { get; set; }
         public string? Image { get; set; }
     }
 
@@ -15,6 +16,7 @@ namespace Application.Features.Examples.Categories.Queries.Specs
         public CategorySpecification(CategorySpecificationParams @params) : base(
             x =>
             (string.IsNullOrWhiteSpace(@params.Search) || x.Name!.Contains(@params.Search)) &&
+            (string.IsNullOrWhiteSpace(@params.Description) || x.Description!.Contains(@params.Description)) &&
             (string.IsNullOrWhiteSpace(@params.Id) || x.Id.ToString().Contains(@params.Id)) &&
             (string.IsNullOrWhiteSpace(@params.Image) || x.Image!.Contains(@params.Image))
             )
@@ -26,6 +28,8 @@ namespace Application.Features.Examples.Categories.Queries.Specs
                 { "idDesc", p => p.Id! },
                 { "namesAsc", p => p.Name! },
                 { "namesDesc", p => p.Name! },
+                { "descAsc", p => p.Description! },
+                { "descDesc", p => p.Description! },
                 { "imgAsc", p => p.Image! },
                 { "imgDesc", p => p.Image! }
             };
@@ -42,6 +46,7 @@ namespace Application.Features.Examples.Categories.Queries.Specs
         public CategoryForCountingSpecification(CategorySpecificationParams @params) : base(
             x =>
             (string.IsNullOrWhiteSpace(@params.Search) || x.Name!.Contains(@params.Search)) &&
+            (string.IsNullOrWhiteSpace(@params.Description) || x.Description!.Contains(@params.Description)) &&
             (string.IsNullOrWhiteSpace(@params.Id) || x.Id.ToString().Contains(@params.Id)) &&
             (string.IsNullOrWhiteSpace(@params.Image) || x.Image!.Contains(@params.Image))
             )

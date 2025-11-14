@@ -150,11 +150,29 @@ Mailpit es un servidor SMTP moderno y ligero diseñado específicamente para des
 }
 ```
 
-### 2. Aplicar Migraciones
+### 2. Desplegar Base de Datos
+
+**Opción A: Desde Visual Studio (Recomendado)**
+
+1. Abre la solución en Visual Studio
+2. En Solution Explorer, navega a `database/CleanArchitectureDb`
+3. Clic derecho en `CleanArchitectureDb.sqlproj` → `Publish...`
+4. Configura la conexión:
+   - **Server**: `localhost,11433`
+   - **Database**: `CleanArchitectureDb`
+   - **Authentication**: SQL Server Authentication
+   - **User**: `sa`
+   - **Password**: `YourPassword123!`
+5. Click en "Publish"
+
+**Opción B: Línea de Comandos (sqlpackage)**
 
 ```bash
-# Desde la raíz del proyecto
-dotnet ef database update --project src/Infrastructure/Persistence --startup-project src/Presentation/AppApi
+# Primero genera el .dacpac (desde directorio database/CleanArchitectureDb)
+msbuild CleanArchitectureDb.sqlproj /p:Configuration=Release
+
+# Luego despliega con sqlpackage
+sqlpackage /Action:Publish /SourceFile:bin/Release/CleanArchitectureDb.dacpac /TargetConnectionString:"Server=localhost,11433;Database=CleanArchitectureDb;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True;"
 ```
 
 ---
@@ -364,15 +382,15 @@ docker volume inspect mailpit-data
 docker-compose down -v
 docker-compose up -d
 Start-Sleep -Seconds 10
-dotnet ef database update --project src/Infrastructure/Persistence --startup-project src/Presentation/AppApi
+# Publica la base de datos desde Visual Studio (ver sección anterior)
 ```
 
 **Linux/Mac (Bash):**
 ```bash
 docker-compose down -v && \
 docker-compose up -d && \
-sleep 10 && \
-dotnet ef database update --project src/Infrastructure/Persistence --startup-project src/Presentation/AppApi
+sleep 10
+# Publica la base de datos desde Visual Studio o con sqlpackage
 ```
 
 ### Limpiar todo (reset completo)

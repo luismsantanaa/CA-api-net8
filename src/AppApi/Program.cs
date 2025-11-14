@@ -43,6 +43,9 @@ builder.Services.AddIdentityServices(builder.Configuration);
 builder.Services.AddSharedServices(builder.Configuration);
 builder.Services.AddSecurityServices(builder.Configuration);
 
+// Configure Advanced Health Checks
+builder.Services.AddAdvancedHealthChecks(builder.Configuration);
+
 // CORS policy per environment
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
 builder.Services.AddCors(options =>
@@ -90,9 +93,6 @@ app.UseSerilogRequestLogging();
 // ConfigureSwagger now handles environment checking internally
 app.ConfigureSwagger();
 
-// Configure Health Checks
-app.ConfigureHealthChecks();
-
 app.UseMiddleware<ExceptionMiddleware>();
 
 // Apply JwtMiddleware only if UseCustomAuthorization is enabled
@@ -111,6 +111,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Configure Advanced Health Check Endpoints
+app.MapAdvancedHealthChecks();
 
 #region Seed Data
 // NOTA: La estructura de base de datos se maneja desde el proyecto SQL Server Database

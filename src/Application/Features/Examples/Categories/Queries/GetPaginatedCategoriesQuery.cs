@@ -1,4 +1,4 @@
-using Application.Features.Examples.Categories.Queries.Specs;
+﻿using Application.Features.Examples.Categories.Queries.Specs;
 using Application.Features.Examples.Categories.VMs;
 using Application.Handlers.Base;
 using AutoMapper;
@@ -7,7 +7,6 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Persistence.Pagination;
 using Persistence.Repositories.Contracts;
-using Persistence.Specification;
 using Persistence.Specification.Contracts;
 
 namespace Application.Features.Examples.Categories.Queries
@@ -15,13 +14,14 @@ namespace Application.Features.Examples.Categories.Queries
     public class GetPaginatedCategoriesQuery : PaginationBase, IRequest<PaginationVm<CategoryVm>>
     {
         public string? Id { get; set; }
+        public string? Description { get; set; }
         public string? Image { get; set; }
     }
 
     internal class GetPaginatedCategoriesQueryHandler(
         IMapper mapper,
         ILogger<GetPaginatedCategoriesQueryHandler> logger,
-        IRepositoryFactory repositoryFactory) 
+        IRepositoryFactory repositoryFactory)
         : PaginatedQueryHandlerBase<TestCategory, CategoryVm, CategorySpecificationParams, GetPaginatedCategoriesQuery>(
             mapper, logger, repositoryFactory)
     {

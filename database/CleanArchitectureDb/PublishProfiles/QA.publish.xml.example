@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Publish Profile para ambiente de QA/TESTING
+  
+  INSTRUCCIONES:
+  1. Copiar este archivo y renombrarlo a QA.publish.xml
+  2. Actualizar los valores de conexión según tu servidor QA
+  3. NO commitear el archivo .publish.xml (está en .gitignore)
+-->
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- Nombre de la base de datos destino -->
+    <TargetDatabaseName>CleanArchitectureDb_QA</TargetDatabaseName>
+    
+    <!-- String de conexión - ACTUALIZAR CON TUS VALORES -->
+    <!-- Opción 1: Integrated Security (Windows Auth) -->
+    <TargetConnectionString>Data Source=sql-qa.company.com;Initial Catalog=CleanArchitectureDb_QA;Integrated Security=True;Trust Server Certificate=True;Encrypt=True</TargetConnectionString>
+    
+    <!-- Opción 2: SQL Authentication -->
+    <!-- <TargetConnectionString>Data Source=sql-qa.company.com;Initial Catalog=CleanArchitectureDb_QA;User ID=db_deploy_user;Password=CHANGE_ME;Trust Server Certificate=True;Encrypt=True</TargetConnectionString> -->
+    
+    <!-- Versión del profile -->
+    <ProfileVersionNumber>1</ProfileVersionNumber>
+    
+    <!-- Opciones de deployment (más estrictas que DEV) -->
+    <BlockOnPossibleDataLoss>True</BlockOnPossibleDataLoss>
+    <IncludeCompositeObjects>True</IncludeCompositeObjects>
+    <ScriptDatabaseOptions>True</ScriptDatabaseOptions>
+    <GenerateSmartDefaults>True</GenerateSmartDefaults>
+    
+    <!-- Backup antes de deployment -->
+    <BackupDatabaseBeforeChanges>True</BackupDatabaseBeforeChanges>
+    
+    <!-- No eliminar objetos que no estén en source -->
+    <DropObjectsNotInSource>False</DropObjectsNotInSource>
+    
+    <!-- Validaciones adicionales -->
+    <DoNotDropUsers>True</DoNotDropUsers>
+    <DoNotDropLogins>True</DoNotDropLogins>
+  </PropertyGroup>
+</Project>
+
